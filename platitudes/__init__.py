@@ -19,8 +19,8 @@ class Platitudes:
         else:
             main_command = self._registered_commands[cmd_args[1]]
 
-        name = cmd_args[2]
-        main_command(name)
+        arguments = cmd_args[2:]
+        main_command(*arguments)
 
     def command(self):
         def f(function):
