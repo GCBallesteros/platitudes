@@ -1,5 +1,6 @@
 __version__ = "0.0.0"
 
+import inspect
 import sys
 from typing import Any
 
@@ -12,6 +13,7 @@ class Platitudes:
         cmd_args = sys.argv
 
         command_name = cmd_args[1]
+        other_args = cmd_args[2:]
 
         if command_name not in self._registered_commands:
             e_ = "Command not registered"
@@ -19,8 +21,14 @@ class Platitudes:
         else:
             main_command = self._registered_commands[cmd_args[1]]
 
-        arguments = cmd_args[2:]
-        main_command(*arguments)
+        command_signature = inspect.signature(main_command)
+        n_arguments = len(command_signature.parameters)
+
+        if len(other_args) > n_arguments:
+            e_ = "Too many arguments!"
+            raise Exception(e_)
+
+        main_command(*other_args)
 
     def command(self):
         def f(function):
