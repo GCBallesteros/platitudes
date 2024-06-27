@@ -24,11 +24,16 @@ class Platitudes:
         command_signature = inspect.signature(main_command)
         n_arguments = len(command_signature.parameters)
 
-        if len(other_args) > n_arguments:
-            e_ = "Too many arguments!"
-            raise Exception(e_)
-
-        main_command(*other_args)
+        if "--help" in other_args:
+            # If help is present we bypass execution and show the
+            # help for the command
+            display_help(main_command)
+            pass
+        else:
+            if len(other_args) > n_arguments:
+                e_ = "Too many arguments!"
+                raise Exception(e_)
+            main_command(*other_args)
 
     def command(self):
         def f(function):
@@ -37,3 +42,8 @@ class Platitudes:
             return function
 
         return f
+
+
+def display_help(command):
+    signature = inspect.signature(command)
+    print(signature)

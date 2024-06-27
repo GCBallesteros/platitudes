@@ -4,7 +4,7 @@ app = pl.Platitudes()
 
 
 @app.command()
-def main(name: str, surname: str = "Holy"):
+def main(name: str, other, surname: str = "Holy"):
     print(f"Hello {name} {surname}")
 
 
