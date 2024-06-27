@@ -1,5 +1,6 @@
 __version__ = "0.0.0"
 
+import argparse
 import inspect
 import sys
 from typing import Callable
@@ -13,7 +14,6 @@ class Platitudes:
         cmd_args = sys.argv
 
         command_name = cmd_args[1]
-        other_args = cmd_args[2:]
 
         if command_name not in self._registered_commands:
             e_ = "Command not registered"
@@ -22,18 +22,20 @@ class Platitudes:
             main_command = self._registered_commands[cmd_args[1]]
 
         command_signature = inspect.signature(main_command)
-        n_arguments = len(command_signature.parameters)
 
-        if "--help" in other_args:
-            # If help is present we bypass execution and show the
-            # help for the command
-            display_help(main_command)
-            pass
-        else:
-            if len(other_args) > n_arguments:
-                e_ = "Too many arguments!"
-                raise Exception(e_)
-            main_command(*other_args)
+        parser = argparse.ArgumentParser()
+        for param_name, param in command_signature.parameters.items():
+            annot = param.annotation
+            if annot is inspect._empty:
+                type_ = str
+            else:
+                type_ = annot
+            parser.add_argument(param_name, type=type_)
+
+        # NOTE: Skip the program and command names
+        args_ = parser.parse_args(sys.argv[2:])
+        args_dict = dict(args_._get_kwargs())
+        main_command(**args_dict)
 
     def command(self):
         def f(function: Callable) -> Callable:
@@ -42,8 +44,3 @@ class Platitudes:
             return function
 
         return f
-
-
-def display_help(command):
-    signature = inspect.signature(command)
-    print(signature)
