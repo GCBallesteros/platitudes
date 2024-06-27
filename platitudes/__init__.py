@@ -2,14 +2,14 @@ __version__ = "0.0.0"
 
 import inspect
 import sys
-from typing import Any
+from typing import Callable
 
 
 class Platitudes:
     def __init__(self):
-        self._registered_commands = {}
+        self._registered_commands: dict[str, Callable] = {}
 
-    def __call__(self, *args: Any, **kwds: Any) -> None:
+    def __call__(self) -> None:
         cmd_args = sys.argv
 
         command_name = cmd_args[1]
@@ -36,7 +36,7 @@ class Platitudes:
             main_command(*other_args)
 
     def command(self):
-        def f(function):
+        def f(function: Callable) -> Callable:
             self._registered_commands[function.__name__] = function
 
             return function
