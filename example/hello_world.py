@@ -27,5 +27,10 @@ def cmd2(
     print("Not reachable!")
 
 
+@app.command()
+def cmd3(is_rainy: bool = False):
+    print(f"Is it rainy? {is_rainy}")
+
+
 if __name__ == "__main__":
     app()

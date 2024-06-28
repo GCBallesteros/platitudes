@@ -46,6 +46,12 @@ class Platitudes:
                     type_ = annot
 
                     if type_ is bool:
+                        if not _has_default_value(param):
+                            e_ = (
+                                "Boolean parameters must always supply a default."
+                                f"This wasn't provided for {param}"
+                            )
+                            raise ValueError(e_)
                         action = argparse.BooleanOptionalAction
 
                     if get_origin(annot) is Annotated:
