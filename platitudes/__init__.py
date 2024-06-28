@@ -25,11 +25,11 @@ class Platitudes:
 
         parser = argparse.ArgumentParser()
         for param_name, param in command_signature.parameters.items():
-            annot = param.annotation
-            if annot is inspect._empty:
+            if (annot := param.annotation) is inspect._empty:
                 type_ = str
             else:
                 type_ = annot
+
             parser.add_argument(param_name, type=type_)
 
         # NOTE: Skip the program and command names
