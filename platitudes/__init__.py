@@ -165,15 +165,16 @@ def make_path_action(
             super().__init__(*args, **kwargs)
 
         def __call__(self, _parser, namespace, path, _option_string=None) -> None:
-            if exists and not path.exists():
+            resolved_path = path.resolve()
+            if exists and not resolved_path.exists():
                 e_ = f"Invalid value for '--config': Path {path} does not exist."
                 raise PlatitudeError(e_)
 
-            if file_okay and not path.isfile():
+            if file_okay and not resolved_path.isfile():
                 e_ = f"Invalid value for '--config': File {path} is a directory."
                 raise PlatitudeError(e_)
 
-            if dir_okay and not path.isdir():
+            if dir_okay and not resolved_path.isdir():
                 e_ = f"Invalid value for '--config': File {path} is a file."
                 raise PlatitudeError(e_)
 
