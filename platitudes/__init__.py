@@ -22,7 +22,10 @@ class Platitudes:
         main_command = self._registered_commands[sys.argv[1]]
 
         args_dict = dict(args_._get_kwargs())
-        main_command(**args_dict)
+        try:
+            main_command(**args_dict)
+        except Exit:
+            sys.exit(0)
 
     def command(self):
         def f(function: Callable) -> Callable:
@@ -53,14 +56,12 @@ class Platitudes:
                     default = param.default
                     optional_prefix = "--"
 
-                    # If we are using an envvar we use it only if it is available on
-                    # the environemnt otherwise don't do anything, ie. keep the default
+                    # Use the envvar if it is available
                     if envvar is not None:
                         try:
                             default = os.environ[envvar]
                         except KeyError:
                             pass
-
                 else:
                     if envvar is not None:
                         e_ = (
@@ -86,3 +87,7 @@ class Argument:
     def __init__(self, help: str | None = None, envvar: str | None = None):
         self.help = help
         self.envvar = envvar
+
+
+class Exit(Exception):
+    pass
