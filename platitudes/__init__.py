@@ -79,7 +79,6 @@ class Platitudes:
                 self._registered_commands[function.__name__] = function
 
             return function
-
         return f
 
 
