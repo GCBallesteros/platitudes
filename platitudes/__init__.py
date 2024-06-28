@@ -6,6 +6,10 @@ import sys
 from typing import Callable
 
 
+def _has_default_value(param: inspect.Parameter):
+    return param.default is not inspect._empty
+
+
 class Platitudes:
     def __init__(self):
         self._registered_commands: dict[str, Callable] = {}
@@ -30,7 +34,16 @@ class Platitudes:
                 else:
                     type_ = annot
 
-                cmd_parser.add_argument(param_name, type=type_)
+                if _has_default_value(param):
+                    default = param.default
+                    optional_prefix = "--"
+                else:
+                    default = None
+                    optional_prefix = ""
+
+                cmd_parser.add_argument(
+                    f"{optional_prefix}{param_name}", type=type_, default=default
+                )
 
                 self._registered_commands[function.__name__] = function
 
