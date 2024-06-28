@@ -7,8 +7,9 @@ app = pl.Platitudes()
 
 
 @app.command()
-def cmd1(name: str, surname: str = "Holy"):
+def cmd1(name: str, surname: str = "Holy", am_i_awesome: bool = True):
     print(f"Hello {name} {surname}")
+    print(f"Awesome? {am_i_awesome}")
 
 
 @app.command()

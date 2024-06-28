@@ -40,9 +40,14 @@ class Platitudes:
                 default = None
                 optional_prefix = ""
                 envvar = None
+                action = "store"
 
                 if (annot := param.annotation) is not inspect._empty:
                     type_ = annot
+
+                    if type_ is bool:
+                        action = argparse.BooleanOptionalAction
+
                     if get_origin(annot) is Annotated:
                         annot_args = get_args(annot)
                         # NOTE: Only the first instance of an `Argument` is considered
@@ -74,11 +79,13 @@ class Platitudes:
                     type=type_,
                     default=default,
                     help=help,
+                    action=action,
                 )
 
                 self._registered_commands[function.__name__] = function
 
             return function
+
         return f
 
 
