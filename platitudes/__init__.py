@@ -173,6 +173,10 @@ def make_path_action(
                 e_ = f"Invalid value for '--config': File {path} is a directory."
                 raise PlatitudeError(e_)
 
+            if dir_okay and not path.isdir():
+                e_ = f"Invalid value for '--config': File {path} is a file."
+                raise PlatitudeError(e_)
+
             setattr(namespace, self.dest, path)
 
     return _PathAction
