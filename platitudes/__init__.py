@@ -70,7 +70,7 @@ class Platitudes:
                         raise ValueError(e_)
 
                 cmd_parser.add_argument(
-                    f"{optional_prefix}{param_name}",
+                    f"{optional_prefix}{param_name.replace('_', '-')}",
                     type=type_,
                     default=default,
                     help=help,
