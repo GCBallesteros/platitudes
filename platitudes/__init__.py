@@ -8,9 +8,8 @@ from pathlib import Path
 from typing import Annotated, Callable, get_args, get_origin
 
 # TODO: Refactor the command parsing a bit
-# TODO: Better error message
 # TODO: Type hints for the action not being helpful
-# TODO: Finish Path stuff
+# TODO: Support for datetime
 
 
 def _has_default_value(param: inspect.Parameter):
@@ -33,10 +32,8 @@ class Platitudes:
 
         main_command = self._registered_commands[sys.argv[1]]
 
-        args_dict = dict(args_._get_kwargs())
-
         try:
-            main_command(**args_dict)
+            main_command(**dict(args_._get_kwargs()))
         except Exit:
             sys.exit(0)
 
@@ -53,7 +50,6 @@ class Platitudes:
                 default = None
                 optional_prefix = ""
                 envvar = None
-                action: str | argparse.Action = "store"
                 action: str | type[argparse.Action] = "store"
                 extra_annotations = None
 
@@ -160,7 +156,6 @@ def make_path_action(
     writable: bool = False,
     readable: bool = True,
     resolve_path: bool = False,
-):
 ) -> type[argparse.Action]:
     class _PathAction(argparse.Action):
         def __init__(self, *args, **kwargs):
@@ -168,16 +163,28 @@ def make_path_action(
 
         def __call__(self, _parser, namespace, path, _option_string=None) -> None:
             resolved_path = path.resolve()
+
+            if resolve_path:
+                path = path.resolve()
+
             if exists and not resolved_path.exists():
-                e_ = f"Invalid value for '--config': Path {path} does not exist."
+                e_ = f"Invalid value for '{self.dest}': Path {path} does not exist."
                 raise PlatitudeError(e_)
 
-            if file_okay and not resolved_path.isfile():
-                e_ = f"Invalid value for '--config': File {path} is a directory."
+            if file_okay and not resolved_path.is_dir():
+                e_ = f"Invalid value for '{self.dest}': File {path} is a directory."
                 raise PlatitudeError(e_)
 
-            if dir_okay and not resolved_path.isdir():
+            if dir_okay and resolved_path.is_file():
                 e_ = f"Invalid value for '--config': File {path} is a file."
+                raise PlatitudeError(e_)
+
+            if readable and not os.access(path, os.R_OK):
+                e_ = f"Invalid value for '{self.dest}': Path {path} is not readable."
+                raise PlatitudeError(e_)
+
+            if writable and not os.access(path, os.W_OK):
+                e_ = f"Invalid value for '{self.dest}': Path {path} is not writable."
                 raise PlatitudeError(e_)
 
             setattr(namespace, self.dest, path)
