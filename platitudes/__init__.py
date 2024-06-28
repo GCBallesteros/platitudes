@@ -54,6 +54,7 @@ class Platitudes:
                 optional_prefix = ""
                 envvar = None
                 action: str | argparse.Action = "store"
+                action: str | type[argparse.Action] = "store"
                 extra_annotations = None
 
                 if (annot := param.annotation) is not inspect._empty:
@@ -160,6 +161,7 @@ def make_path_action(
     readable: bool = True,
     resolve_path: bool = False,
 ):
+) -> type[argparse.Action]:
     class _PathAction(argparse.Action):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
