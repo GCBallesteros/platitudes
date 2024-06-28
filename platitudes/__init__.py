@@ -3,7 +3,7 @@ __version__ = "0.0.0"
 import argparse
 import inspect
 import sys
-from typing import Callable
+from typing import Annotated, Callable, get_args, get_origin
 
 
 def _has_default_value(param: inspect.Parameter):
@@ -29,20 +29,32 @@ class Platitudes:
             cmd_signature = inspect.signature(function)
 
             for param_name, param in cmd_signature.parameters.items():
-                if (annot := param.annotation) is inspect._empty:
-                    type_ = str
-                else:
+                # Set default values for the arguments parameters which may
+                # be overriden.
+                help = None
+                type_ = str
+                default = None
+                optional_prefix = ""
+
+                if (annot := param.annotation) is not inspect._empty:
                     type_ = annot
+                    if get_origin(annot) is Annotated:
+                        annot_args = get_args(annot)
+                        # NOTE: Only the first instance of an `Argument` is considered
+                        for arg in annot_args:
+                            if isinstance(arg, Argument):
+                                help = arg.help
+                                break
 
                 if _has_default_value(param):
                     default = param.default
                     optional_prefix = "--"
-                else:
-                    default = None
-                    optional_prefix = ""
 
                 cmd_parser.add_argument(
-                    f"{optional_prefix}{param_name}", type=type_, default=default
+                    f"{optional_prefix}{param_name}",
+                    type=type_,
+                    default=default,
+                    help=help,
                 )
 
                 self._registered_commands[function.__name__] = function
@@ -50,3 +62,9 @@ class Platitudes:
             return function
 
         return f
+
+
+class Argument:
+    def __init__(self, help: str | None = None, envvar: str | None = None):
+        self.help = help
+        self.envvar = envvar
