@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Annotated, Callable, get_args, get_origin
 
 # TODO: Refactor the command parsing a bit
-# TODO: Type hints for the action not being helpful
 # TODO: Support for datetime
 
 
@@ -51,7 +50,7 @@ class Platitudes:
                 optional_prefix = ""
                 envvar = None
                 action: str | type[argparse.Action] = "store"
-                extra_annotations = None
+                extra_annotations: None | Annotated = None
 
                 if (annot := param.annotation) is not inspect._empty:
                     type_ = annot
@@ -78,7 +77,7 @@ class Platitudes:
                             )
                             raise ValueError(e_)
                         action = argparse.BooleanOptionalAction
-                    elif type_ is Path:
+                    elif type_ is Path and extra_annotations is not None:
                         action = extra_annotations._path_action
 
                 if _has_default_value(param):
