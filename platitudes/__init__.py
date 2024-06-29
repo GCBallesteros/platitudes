@@ -1,6 +1,7 @@
 __version__ = "0.1.0"
 
 import argparse
+from enum import Enum
 import inspect
 import os
 import sys
@@ -8,11 +9,8 @@ from pathlib import Path
 from types import UnionType
 from typing import Annotated, Any, Callable, Union, get_args, get_origin
 
-# TODO: Support for Optional[x] and `x | None`
-# TODO: Support for enum
 # TODO: Support for datetime
 # TODO: Refactor the command parsing a bit
-# TODO: Support for json configuration files and merging
 # TODO: Support for tuples
 # TODO: Support for pint
 
@@ -80,6 +78,7 @@ class Platitudes:
                 envvar = None
                 action: str | type[argparse.Action] = "store"
                 extra_annotations: None | Annotated = None
+                choices = None
 
                 if (annot := param.annotation) is not inspect._empty:
                     type_ = annot
@@ -120,6 +119,14 @@ class Platitudes:
                         action = argparse.BooleanOptionalAction
                     elif type_ is Path and extra_annotations is not None:
                         action = extra_annotations._path_action
+                    elif issubclass(type_, Enum):
+                        choices = [e.value for e in type_]
+                        action = make_enum_action(type_)
+                        try:
+                            # TODO: Check type is homogenous
+                            type_ = type(choices[0])
+                        except IndexError:
+                            PlatitudeError("Enum must have at least one choice")
 
                 if _has_default_value(param):
                     default = param.default
@@ -144,6 +151,7 @@ class Platitudes:
                     default=default,
                     help=help,
                     action=action,
+                    choices=choices,
                 )
 
                 self._registered_commands[function.__name__] = function
@@ -187,6 +195,23 @@ class Exit(Exception):
 class PlatitudeError(Exception):
     def __str__(self):
         return f"Error: {self.args[0]}"
+
+
+def make_enum_action(enum_):
+    class _EnumAction(argparse.Action):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+        def __call__(self, _parser, namespace, enum_value, _option_string=None) -> None:
+            def find_enum_field(value):
+                for member in enum_:
+                    if member.value == value:
+                        return member
+                return None
+
+            setattr(namespace, self.dest, find_enum_field(enum_value))
+
+    return _EnumAction
 
 
 def make_path_action(
