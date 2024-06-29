@@ -54,7 +54,7 @@ class Color(Enum):
 
 
 @app.command()
-def cmd6(color: Color):
+def cmd6(color: Color=Color.RED):
     print(f"Color of party town: {color}")
 
 
