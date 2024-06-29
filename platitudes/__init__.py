@@ -5,7 +5,8 @@ import inspect
 import os
 import sys
 from pathlib import Path
-from typing import Annotated, Callable, get_args, get_origin
+from types import UnionType
+from typing import Annotated, Any, Callable, Union, get_args, get_origin
 
 # TODO: Refactor the command parsing a bit
 # TODO: Support for datetime
@@ -13,6 +14,27 @@ from typing import Annotated, Callable, get_args, get_origin
 
 def _has_default_value(param: inspect.Parameter):
     return param.default is not inspect._empty
+
+
+def _is_maybe(type_hint: Any) -> bool:
+    origin = get_origin(type_hint)
+    # `x | None`,  Optional[x]` and `Union[x, None]`
+    if origin is UnionType or origin is Union:
+        args = get_args(type_hint)
+        if len(args) == 2 and type(None) in args:
+            return True
+
+    return False
+
+
+def _unwrap_maybe(type_hint: Any) -> type:
+    origin = get_origin(type_hint)
+
+    if origin is UnionType or origin is Union:
+        args = get_args(type_hint)
+        return next(arg for arg in args if arg is not type(None))
+
+    raise TypeError("Unhandled type_hint")
 
 
 class Platitudes:
@@ -57,6 +79,7 @@ class Platitudes:
                 if (annot := param.annotation) is not inspect._empty:
                     type_ = annot
 
+                    # Unwrap Annotated parameters and keep the platitudes.Argument
                     if get_origin(annot) is Annotated:
                         annot_args = get_args(annot)
                         # Unnest the type from `Annotated` parameters
@@ -66,6 +89,17 @@ class Platitudes:
                             if isinstance(arg, Argument):
                                 extra_annotations = arg
                                 break
+
+                    # Check for `None | x` parameters
+                    if _is_maybe(type_):
+                        if not _has_default_value(param):
+                            e_ = (
+                                "Potentially None params must provide a default. "
+                                f"Missing from {param}"
+                            )
+                            raise PlatitudeError(e_)
+                        else:
+                            type_ = _unwrap_maybe(type_)
 
                     if extra_annotations is not None:
                         help = extra_annotations.help
