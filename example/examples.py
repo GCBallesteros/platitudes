@@ -9,13 +9,13 @@ import platitudes as pl
 app = pl.Platitudes()
 
 
-@app.command()
+@app.command
 def cmd1(name: str, surname: str = "Holy", am_i_awesome: bool = True):
     print(f"Hello {name} {surname}")
     print(f"Awesome? {am_i_awesome}")
 
 
-@app.command()
+@app.command
 def cmd2(
     name: Annotated[str, pl.Argument(help="Author name")],
     surname: str,  # No help but still positional
@@ -30,12 +30,12 @@ def cmd2(
     print("Not reachable!")
 
 
-@app.command()
+@app.command
 def cmd3(is_rainy: bool = False):
     print(f"Is it rainy? {is_rainy}")
 
 
-@app.command()
+@app.command
 def cmd4(
     book_uuid: UUID, another_uuid: UUID = UUID("d48edaa6-871a-4082-a196-4daab372d4a1")
 ):
@@ -43,7 +43,7 @@ def cmd4(
     print(f"Other UUID: {another_uuid}")
 
 
-@app.command()
+@app.command
 def cmd5(town: str | None = None):
     print(f"Town: {town}")
 
@@ -54,12 +54,12 @@ class Color(Enum):
     BLUE = 2
 
 
-@app.command()
+@app.command
 def cmd6(color: Color = Color.RED):
     print(f"Color of party town: {color}")
 
 
-@app.command()
+@app.command
 def cmd7(birthday: datetime):
     print(f"My BDay is on: {birthday}")
 

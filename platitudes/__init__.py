@@ -66,106 +66,103 @@ class Platitudes:
         except Exit:
             sys.exit(0)
 
-    def command(self):
-        def f(function: Callable) -> Callable:
-            cmd_parser = self._subparsers.add_parser(function.__name__)
-            cmd_signature = inspect.signature(function)
+    def command(self, function: Callable) -> Callable:
+        cmd_parser = self._subparsers.add_parser(function.__name__)
+        cmd_signature = inspect.signature(function)
 
-            for param_name, param in cmd_signature.parameters.items():
-                # Set default values for the arguments parameters which may be
-                # overriden.
-                help = None
-                type_ = str
-                default = None
-                optional_prefix = ""
-                envvar = None
-                action: str | type[argparse.Action] = "store"
-                extra_annotations: None | Annotated = None
-                choices = None
+        for param_name, param in cmd_signature.parameters.items():
+            # Set default values for the arguments parameters which may be
+            # overriden.
+            help = None
+            type_ = str
+            default = None
+            optional_prefix = ""
+            envvar = None
+            action: str | type[argparse.Action] = "store"
+            extra_annotations: None | Annotated = None
+            choices = None
 
-                if (annot := param.annotation) is not inspect._empty:
-                    type_ = annot
+            if (annot := param.annotation) is not inspect._empty:
+                type_ = annot
 
-                    # Unwrap Annotated parameters and keep the platitudes.Argument
-                    if get_origin(annot) is Annotated:
-                        annot_args = get_args(annot)
-                        # Unnest the type from `Annotated` parameters
-                        type_ = annot_args[0]
-                        # NOTE: Only the first instance of an `Argument` is considered
-                        for arg in annot_args:
-                            if isinstance(arg, Argument):
-                                extra_annotations = arg
-                                break
+                # Unwrap Annotated parameters and keep the platitudes.Argument
+                if get_origin(annot) is Annotated:
+                    annot_args = get_args(annot)
+                    # Unnest the type from `Annotated` parameters
+                    type_ = annot_args[0]
+                    # NOTE: Only the first instance of an `Argument` is considered
+                    for arg in annot_args:
+                        if isinstance(arg, Argument):
+                            extra_annotations = arg
+                            break
 
-                    # Check for `None | x` parameters
-                    if _is_maybe(type_):
-                        if not _has_default_value(param):
-                            e_ = (
-                                "Potentially None params must provide a default. "
-                                f"Missing from {param}"
-                            )
-                            raise PlatitudeError(e_)
-                        else:
-                            type_ = _unwrap_maybe(type_)
-
-                    if extra_annotations is not None:
-                        help = extra_annotations.help
-                        envvar = extra_annotations.envvar
-
-                    if type_ is bool:
-                        if not _has_default_value(param):
-                            e_ = (
-                                "Boolean parameters must always supply a default."
-                                "This wasn't provided for {param}"
-                            )
-                            raise ValueError(e_)
-                        action = argparse.BooleanOptionalAction
-                    elif type_ is Path and extra_annotations is not None:
-                        action = extra_annotations._path_action
-                    elif issubclass(type_, Enum):
-                        choices = [e.value for e in type_]
-                        action = make_enum_action(type_)
-                        try:
-                            # TODO: Check type is homogenous
-                            type_ = type(choices[0])
-                        except IndexError:
-                            PlatitudeError("Enum must have at least one choice")
-                    elif type_ is datetime:
-                        if extra_annotations is not None:
-                            action = extra_annotations._datetime_action
-                        else:
-                            action = make_datetime_action(DEFAULT_DATETIME_FORMATS)
-                        type_ = str
-
-                if _has_default_value(param):
-                    default = param.default
-                    optional_prefix = "--"
-
-                    # Use the envvar if it is available
-                    if envvar is not None:
-                        try:
-                            default = os.environ[envvar]
-                        except KeyError:
-                            pass
-                else:
-                    if envvar is not None:
+                # Check for `None | x` parameters
+                if _is_maybe(type_):
+                    if not _has_default_value(param):
                         e_ = (
-                            "Envvars are not supported for arguments without a default."
+                            "Potentially None params must provide a default. "
+                            f"Missing from {param}"
+                        )
+                        raise PlatitudeError(e_)
+                    else:
+                        type_ = _unwrap_maybe(type_)
+
+                if extra_annotations is not None:
+                    help = extra_annotations.help
+                    envvar = extra_annotations.envvar
+
+                if type_ is bool:
+                    if not _has_default_value(param):
+                        e_ = (
+                            "Boolean parameters must always supply a default."
+                            "This wasn't provided for {param}"
                         )
                         raise ValueError(e_)
+                    action = argparse.BooleanOptionalAction
+                elif type_ is Path and extra_annotations is not None:
+                    action = extra_annotations._path_action
+                elif issubclass(type_, Enum):
+                    choices = [e.value for e in type_]
+                    action = make_enum_action(type_)
+                    try:
+                        # TODO: Check type is homogenous
+                        type_ = type(choices[0])
+                    except IndexError:
+                        PlatitudeError("Enum must have at least one choice")
+                elif type_ is datetime:
+                    if extra_annotations is not None:
+                        action = extra_annotations._datetime_action
+                    else:
+                        action = make_datetime_action(DEFAULT_DATETIME_FORMATS)
+                    type_ = str
 
-                cmd_parser.add_argument(
-                    f"{optional_prefix}{param_name.replace('_', '-')}",
-                    type=type_,
-                    default=default,
-                    help=help,
-                    action=action,
-                    choices=choices,
-                )
+            if _has_default_value(param):
+                default = param.default
+                optional_prefix = "--"
 
-                self._registered_commands[function.__name__] = function
+                # Use the envvar if it is available
+                if envvar is not None:
+                    try:
+                        default = os.environ[envvar]
+                    except KeyError:
+                        pass
+            else:
+                if envvar is not None:
+                    e_ = "Envvars are not supported for arguments without a default."
+                    raise ValueError(e_)
 
-            return function
+            cmd_parser.add_argument(
+                f"{optional_prefix}{param_name.replace('_', '-')}",
+                type=type_,
+                default=default,
+                help=help,
+                action=action,
+                choices=choices,
+            )
+
+            self._registered_commands[function.__name__] = function
+
+        return function
 
         return f
 
