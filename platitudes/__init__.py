@@ -46,15 +46,20 @@ class Platitudes:
         self._parser = argparse.ArgumentParser()
         self._subparsers = self._parser.add_subparsers()
 
-    def __call__(self) -> None:
+    def __call__(self, arguments: list[str] | None = None) -> None:
+        if arguments is None:
+            arguments = sys.argv
+        else:
+            pass
+
         try:
-            args_ = self._parser.parse_args()
+            args_ = self._parser.parse_args(arguments[1:])
         except PlatitudeError as e:
             print("\n", e, "\n")
             print(self._parser.format_help())
             sys.exit(1)
 
-        main_command = self._registered_commands[sys.argv[1]]
+        main_command = self._registered_commands[arguments[1]]
 
         try:
             # NOTE: argparse insists on replacing _ with - for positional arguments
