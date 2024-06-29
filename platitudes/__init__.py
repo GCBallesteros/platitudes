@@ -8,8 +8,13 @@ from pathlib import Path
 from types import UnionType
 from typing import Annotated, Any, Callable, Union, get_args, get_origin
 
-# TODO: Refactor the command parsing a bit
+# TODO: Support for Optional[x] and `x | None`
+# TODO: Support for enum
 # TODO: Support for datetime
+# TODO: Refactor the command parsing a bit
+# TODO: Support for json configuration files and merging
+# TODO: Support for tuples
+# TODO: Support for pint
 
 
 def _has_default_value(param: inspect.Parameter):
