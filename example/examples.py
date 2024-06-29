@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Annotated
@@ -54,8 +55,13 @@ class Color(Enum):
 
 
 @app.command()
-def cmd6(color: Color=Color.RED):
+def cmd6(color: Color = Color.RED):
     print(f"Color of party town: {color}")
+
+
+@app.command()
+def cmd7(birthday: datetime):
+    print(f"My BDay is on: {birthday}")
 
 
 if __name__ == "__main__":

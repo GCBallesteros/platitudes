@@ -1,6 +1,7 @@
 __version__ = "0.0.1"
 
 import argparse
+from datetime import datetime
 from enum import Enum
 import inspect
 import os
@@ -9,10 +10,13 @@ from pathlib import Path
 from types import UnionType
 from typing import Annotated, Any, Callable, Union, get_args, get_origin
 
-# TODO: Support for datetime
 # TODO: Refactor the command parsing a bit
 # TODO: Support for tuples
 # TODO: Support for pint
+# TODO: datetime errors should show possible candidates
+# TODO: datetime help should show possible formats
+
+DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
 
 def _has_default_value(param: inspect.Parameter):
@@ -118,7 +122,7 @@ class Platitudes:
                         if not _has_default_value(param):
                             e_ = (
                                 "Boolean parameters must always supply a default."
-                                f"This wasn't provided for {param}"
+                                "This wasn't provided for {param}"
                             )
                             raise ValueError(e_)
                         action = argparse.BooleanOptionalAction
@@ -132,6 +136,12 @@ class Platitudes:
                             type_ = type(choices[0])
                         except IndexError:
                             PlatitudeError("Enum must have at least one choice")
+                    elif type_ is datetime:
+                        if extra_annotations is not None:
+                            action = extra_annotations._datetime_action
+                        else:
+                            action = make_datetime_action(DEFAULT_DATETIME_FORMATS)
+                        type_ = str
 
                 if _has_default_value(param):
                     default = param.default
@@ -178,6 +188,8 @@ class Argument:
         writable: bool = False,
         readable: bool = True,
         resolve_path: bool = False,
+        # DateTime
+        formats: list[str] | None = None,
     ):
         self.help = help
         self.envvar = envvar
@@ -192,6 +204,11 @@ class Argument:
             resolve_path,
         )
 
+        # Only relevant if we are dealing with Paths
+        if formats is None:
+            formats = DEFAULT_DATETIME_FORMATS
+        self._datetime_action = make_datetime_action(formats)
+
 
 class Exit(Exception):
     pass
@@ -200,6 +217,29 @@ class Exit(Exception):
 class PlatitudeError(Exception):
     def __str__(self):
         return f"Error: {self.args[0]}"
+
+
+def make_datetime_action(formats: list[str]):
+    class _DatetimeAction(argparse.Action):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+        def __call__(
+            self, _parser, namespace, datetime_value, _option_string=None
+        ) -> None:
+            def parse_datetime(datetime_: str) -> datetime:
+                for possible_format in formats:
+                    try:
+                        parsed_datetime = datetime.strptime(datetime_, possible_format)
+                        return parsed_datetime
+                    except ValueError:
+                        pass
+
+                raise PlatitudeError("Could not parse datetime.")
+
+            setattr(namespace, self.dest, parse_datetime(datetime_value))
+
+    return _DatetimeAction
 
 
 def make_enum_action(enum_):
@@ -212,7 +252,6 @@ def make_enum_action(enum_):
                 for member in enum_:
                     if member.value == value:
                         return member
-                return None
 
             setattr(namespace, self.dest, find_enum_field(enum_value))
 
