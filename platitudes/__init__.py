@@ -1,20 +1,14 @@
 __version__ = "0.0.1"
 
 import argparse
-from datetime import datetime
-from enum import Enum
 import inspect
 import os
 import sys
+from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from types import UnionType
 from typing import Annotated, Any, Callable, Union, get_args, get_origin
-
-# TODO: Refactor the command parsing a bit
-# TODO: Support for tuples
-# TODO: Support for pint
-# TODO: datetime errors should show possible candidates
-# TODO: datetime help should show possible formats
 
 DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
@@ -219,6 +213,9 @@ class PlatitudeError(Exception):
         return f"Error: {self.args[0]}"
 
 
+# = = = = = = = = =  #
+#  argparse Actions  #
+# = = = = = = = = =  #
 def make_datetime_action(formats: list[str]):
     class _DatetimeAction(argparse.Action):
         def __init__(self, *args, **kwargs):
