@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 __version__ = "0.0.1"
+
 
 import argparse
 import inspect
@@ -36,6 +39,23 @@ def _unwrap_maybe(type_hint: Any) -> type:
         return next(arg for arg in args if arg is not type(None))
 
     raise TypeError("Unhandled type_hint")
+
+
+def _unwrap_annoted(annot: Any) -> tuple[Any, Argument | None]:
+    type_ = annot
+    extra_annotations = None
+    # Unwrap Annotated parameters and keep the platitudes.Argument
+    if get_origin(annot) is Annotated:
+        annot_args = get_args(annot)
+        # Unnest the type from `Annotated` parameters
+        type_ = annot_args[0]
+        # NOTE: Only the first instance of an `Argument` is considered
+        for arg in annot_args:
+            if isinstance(arg, Argument):
+                extra_annotations = arg
+                break
+
+    return type_, extra_annotations
 
 
 class Platitudes:
@@ -79,22 +99,10 @@ class Platitudes:
             optional_prefix = ""
             envvar = None
             action: str | type[argparse.Action] = "store"
-            extra_annotations: None | Annotated = None
             choices = None
 
             if (annot := param.annotation) is not inspect._empty:
-                type_ = annot
-
-                # Unwrap Annotated parameters and keep the platitudes.Argument
-                if get_origin(annot) is Annotated:
-                    annot_args = get_args(annot)
-                    # Unnest the type from `Annotated` parameters
-                    type_ = annot_args[0]
-                    # NOTE: Only the first instance of an `Argument` is considered
-                    for arg in annot_args:
-                        if isinstance(arg, Argument):
-                            extra_annotations = arg
-                            break
+                type_, extra_annotations = _unwrap_annoted(annot)
 
                 # Check for `None | x` parameters
                 if _is_maybe(type_):
@@ -163,8 +171,6 @@ class Platitudes:
             self._registered_commands[function.__name__] = function
 
         return function
-
-        return f
 
 
 class Argument:
