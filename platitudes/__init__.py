@@ -32,7 +32,9 @@ class Platitudes:
         main_command = self._registered_commands[sys.argv[1]]
 
         try:
-            main_command(**dict(args_._get_kwargs()))
+            # NOTE: argparse insists on replacing _ with - for positional arguments
+            # so we need to undo it
+            main_command(**{k.replace("-", "_"): v for k, v in vars(args_).items()})
         except Exit:
             sys.exit(0)
 
