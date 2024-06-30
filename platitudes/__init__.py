@@ -41,7 +41,7 @@ def _unwrap_maybe(type_hint: Any) -> type:
     raise TypeError("Unhandled type_hint")
 
 
-def _unwrap_annoted(annot: Any) -> tuple[Any, Argument | None]:
+def _unwrap_annotated(annot: Any) -> tuple[Any, Argument | None]:
     type_ = annot
     extra_annotations = None
     # Unwrap Annotated parameters and keep the platitudes.Argument
@@ -102,7 +102,7 @@ class Platitudes:
             choices = None
 
             if (annot := param.annotation) is not inspect._empty:
-                type_, extra_annotations = _unwrap_annoted(annot)
+                type_, extra_annotations = _unwrap_annotated(annot)
 
                 # Check for `None | x` parameters
                 if _is_maybe(type_):
