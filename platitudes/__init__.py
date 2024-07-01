@@ -12,6 +12,7 @@ from enum import Enum
 from pathlib import Path
 from types import UnionType
 from typing import Annotated, Any, Callable, Union, get_args, get_origin
+from uuid import UUID
 
 DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
@@ -41,7 +42,7 @@ def _unwrap_maybe(type_hint: Any) -> type:
     raise TypeError("Unhandled type_hint")
 
 
-def _unwrap_annotated(annot: Any) -> tuple[Any, Argument | None]:
+def _unwrap_annotated(annot: Any) -> tuple[Any, Argument]:
     type_ = annot
     extra_annotations = None
     # Unwrap Annotated parameters and keep the platitudes.Argument
@@ -55,7 +56,82 @@ def _unwrap_annotated(annot: Any) -> tuple[Any, Argument | None]:
                 extra_annotations = arg
                 break
 
+    if extra_annotations is None:
+        extra_annotations = Argument()
+
     return type_, extra_annotations
+
+
+def _handle_maybe(type_, param):
+    # Check for `None | x` parameters
+    if _is_maybe(type_):
+        if not _has_default_value(param):
+            e_ = (
+                "Potentially None params must provide a default. "
+                f"Missing from {param}"
+            )
+            raise PlatitudeError(e_)
+        else:
+            type_ = _unwrap_maybe(type_)
+    return type_
+
+
+def _handle_type_specific_behaviour(
+    type_, param, extra_annotations
+) -> tuple[str | type[argparse.Action], list[Any] | None]:
+    action: str | type[argparse.Action] = "store"
+    choices = None
+
+    if type_ is bool:
+        if not _has_default_value(param):
+            e_ = (
+                "Boolean parameters must always supply a default."
+                "This wasn't provided for {param}"
+            )
+            raise ValueError(e_)
+        action = argparse.BooleanOptionalAction
+    elif type_ is Path:
+        action = extra_annotations._path_action
+    elif issubclass(type_, Enum):
+        # TODO: Missing to str
+        choices = [str(e.value) for e in type_]
+        try:
+            enum_value_type = type(choices[0])
+            action = make_enum_action(type_, enum_value_type)
+            # TODO: Check type is homogenous
+            # type_ = type(choices[0])
+        except IndexError:
+            PlatitudeError("Enum must have at least one choice")
+    elif type_ is datetime:
+        action = extra_annotations._datetime_action
+    elif type_ is int:
+        action = _IntAction
+    elif type_ is float:
+        action = _FloatAction
+    elif type_ is UUID:
+        action = _UUIDAction
+
+    return action, choices
+
+
+def _get_default(param, envvar: str | None) -> tuple[Any, str]:
+    optional_prefix = ""
+    default = None
+    if _has_default_value(param):
+        default = param.default
+        optional_prefix = "--"
+
+        # Use the envvar if it is available
+        if envvar is not None:
+            try:
+                default = os.environ[envvar]
+            except KeyError:
+                pass
+    else:
+        if envvar is not None:
+            e_ = "Envvars are not supported for arguments without a default."
+            raise ValueError(e_)
+    return default, optional_prefix
 
 
 class Platitudes:
@@ -74,6 +150,7 @@ class Platitudes:
             args_ = self._parser.parse_args(arguments[1:])
         except PlatitudeError as e:
             print("\n", e, "\n")
+            # TODO: This error should be the subparser one
             print(self._parser.format_help())
             sys.exit(1)
 
@@ -91,77 +168,27 @@ class Platitudes:
         cmd_signature = inspect.signature(function)
 
         for param_name, param in cmd_signature.parameters.items():
-            # Set default values for the arguments parameters which may be
-            # overriden.
             help = None
-            type_ = str
-            default = None
-            optional_prefix = ""
             envvar = None
-            action: str | type[argparse.Action] = "store"
-            choices = None
 
             if (annot := param.annotation) is not inspect._empty:
-                type_, extra_annotations = _unwrap_annotated(annot)
-
-                # Check for `None | x` parameters
-                if _is_maybe(type_):
-                    if not _has_default_value(param):
-                        e_ = (
-                            "Potentially None params must provide a default. "
-                            f"Missing from {param}"
-                        )
-                        raise PlatitudeError(e_)
-                    else:
-                        type_ = _unwrap_maybe(type_)
-
-                if extra_annotations is not None:
-                    help = extra_annotations.help
-                    envvar = extra_annotations.envvar
-
-                if type_ is bool:
-                    if not _has_default_value(param):
-                        e_ = (
-                            "Boolean parameters must always supply a default."
-                            "This wasn't provided for {param}"
-                        )
-                        raise ValueError(e_)
-                    action = argparse.BooleanOptionalAction
-                elif type_ is Path and extra_annotations is not None:
-                    action = extra_annotations._path_action
-                elif issubclass(type_, Enum):
-                    choices = [e.value for e in type_]
-                    action = make_enum_action(type_)
-                    try:
-                        # TODO: Check type is homogenous
-                        type_ = type(choices[0])
-                    except IndexError:
-                        PlatitudeError("Enum must have at least one choice")
-                elif type_ is datetime:
-                    if extra_annotations is not None:
-                        action = extra_annotations._datetime_action
-                    else:
-                        action = make_datetime_action(DEFAULT_DATETIME_FORMATS)
-                    type_ = str
-
-            if _has_default_value(param):
-                default = param.default
-                optional_prefix = "--"
-
-                # Use the envvar if it is available
-                if envvar is not None:
-                    try:
-                        default = os.environ[envvar]
-                    except KeyError:
-                        pass
+                pass
             else:
-                if envvar is not None:
-                    e_ = "Envvars are not supported for arguments without a default."
-                    raise ValueError(e_)
+                annot = str
+
+            type_, extra_annotations = _unwrap_annotated(annot)
+            action, choices = _handle_type_specific_behaviour(
+                _handle_maybe(type_, param), param, extra_annotations
+            )
+
+            help = extra_annotations.help
+            envvar = extra_annotations.envvar
+
+            default, optional_prefix = _get_default(param, envvar)
 
             cmd_parser.add_argument(
                 f"{optional_prefix}{param_name.replace('_', '-')}",
-                type=type_,
+                type=str,
                 default=default,
                 help=help,
                 action=action,
@@ -213,7 +240,7 @@ class Exit(Exception):
 
 class PlatitudeError(Exception):
     def __str__(self):
-        return f"Error: {self.args[0]}"
+        return f"error: {self.args[0]}"
 
 
 # = = = = = = = = =  #
@@ -221,9 +248,6 @@ class PlatitudeError(Exception):
 # = = = = = = = = =  #
 def make_datetime_action(formats: list[str]):
     class _DatetimeAction(argparse.Action):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
         def __call__(
             self, _parser, namespace, datetime_value, _option_string=None
         ) -> None:
@@ -242,20 +266,49 @@ def make_datetime_action(formats: list[str]):
     return _DatetimeAction
 
 
-def make_enum_action(enum_):
+def make_enum_action(enum_, enum_value_type):
     class _EnumAction(argparse.Action):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
         def __call__(self, _parser, namespace, enum_value, _option_string=None) -> None:
             def find_enum_field(value):
                 for member in enum_:
-                    if member.value == value:
+                    if str(member.value) == value:
                         return member
 
-            setattr(namespace, self.dest, find_enum_field(enum_value))
+            out = find_enum_field(enum_value)
+            # TODO: Only str and int supported
+            setattr(namespace, self.dest, enum_value_type(out))
 
     return _EnumAction
+
+
+class _FloatAction(argparse.Action):
+    def __call__(self, _parser, namespace, float_value, _option_string=None) -> None:
+        try:
+            out = float(float_value)
+        except ValueError:
+            e_ = f"argument {self.dest}: invalid float value: '{float_value}'"
+            raise PlatitudeError(e_)
+        setattr(namespace, self.dest, out)
+
+
+class _IntAction(argparse.Action):
+    def __call__(self, _parser, namespace, int_value, _option_string=None) -> None:
+        try:
+            out = int(int_value)
+        except ValueError:
+            e_ = f"argument {self.dest}: invalid int value: '{int_value}'"
+            raise PlatitudeError(e_)
+        setattr(namespace, self.dest, out)
+
+
+class _UUIDAction(argparse.Action):
+    def __call__(self, _parser, namespace, uuid_str, _option_string=None) -> None:
+        try:
+            out = UUID(uuid_str)
+        except ValueError:
+            e_ = f"argument {self.dest}: invalid uuid value: '{uuid_str}'"
+            raise PlatitudeError(e_)
+        setattr(namespace, self.dest, out)
 
 
 def make_path_action(
@@ -267,10 +320,8 @@ def make_path_action(
     resolve_path: bool = False,
 ) -> type[argparse.Action]:
     class _PathAction(argparse.Action):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
-        def __call__(self, _parser, namespace, path, _option_string=None) -> None:
+        def __call__(self, _parser, namespace, path_str, _option_string=None) -> None:
+            path = Path(path_str)
             resolved_path = path.resolve()
 
             if resolve_path:
@@ -280,12 +331,12 @@ def make_path_action(
                 e_ = f"Invalid value for '{self.dest}': Path {path} does not exist."
                 raise PlatitudeError(e_)
 
-            if file_okay and not resolved_path.is_dir():
-                e_ = f"Invalid value for '{self.dest}': File {path} is a directory."
+            if not file_okay and resolved_path.is_file():
+                e_ = f"Invalid value for '{self.dest}': File {path} is a file."
                 raise PlatitudeError(e_)
 
-            if dir_okay and resolved_path.is_file():
-                e_ = f"Invalid value for '--config': File {path} is a file."
+            if not dir_okay and resolved_path.is_dir():
+                e_ = f"Invalid value for '{self.dest}': File {path} is a directory."
                 raise PlatitudeError(e_)
 
             if readable and not os.access(path, os.R_OK):

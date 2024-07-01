@@ -25,13 +25,15 @@ def cmd2(
 ):
     print(f"My name {name} {surname}")
     print(f"My picture: {photo_file}")
+    print(type(photo_file))
 
     raise pl.Exit()  # Early exit!!
     print("Not reachable!")
 
 
 @app.command
-def cmd3(is_rainy: bool = False):
+def cmd3(unknwon_param, is_rainy: bool = False):
+    print(unknwon_param)
     print(f"Is it rainy? {is_rainy}")
 
 
@@ -62,6 +64,11 @@ def cmd6(color: Color = Color.RED):
 @app.command
 def cmd7(birthday: datetime):
     print(f"My BDay is on: {birthday}")
+
+
+@app.command
+def cmd8(fav_number: int):
+    print(f"My fav number is: {fav_number}")
 
 
 if __name__ == "__main__":
