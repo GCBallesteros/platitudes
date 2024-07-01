@@ -93,13 +93,9 @@ def _handle_type_specific_behaviour(
     elif type_ is Path:
         action = extra_annotations._path_action
     elif issubclass(type_, Enum):
-        # TODO: Missing to str
         choices = [str(e.value) for e in type_]
         try:
-            enum_value_type = type(choices[0])
-            action = make_enum_action(type_, enum_value_type)
-            # TODO: Check type is homogenous
-            # type_ = type(choices[0])
+            action = make_enum_action(type_)
         except IndexError:
             PlatitudeError("Enum must have at least one choice")
     elif type_ is datetime:
@@ -114,11 +110,11 @@ def _handle_type_specific_behaviour(
     return action, choices
 
 
-def _get_default(param, envvar: str | None) -> tuple[Any, str]:
+def _get_default(param, envvar: str | None, action) -> tuple[Any, str]:
     optional_prefix = ""
     default = None
     if _has_default_value(param):
-        default = param.default
+        default = action.process(param.default, "")
         optional_prefix = "--"
 
         # Use the envvar if it is available
@@ -184,7 +180,7 @@ class Platitudes:
             help = extra_annotations.help
             envvar = extra_annotations.envvar
 
-            default, optional_prefix = _get_default(param, envvar)
+            default, optional_prefix = _get_default(param, envvar, action)
 
             cmd_parser.add_argument(
                 f"{optional_prefix}{param_name.replace('_', '-')}",
@@ -248,9 +244,11 @@ class PlatitudeError(Exception):
 # = = = = = = = = =  #
 def make_datetime_action(formats: list[str]):
     class _DatetimeAction(argparse.Action):
-        def __call__(
-            self, __parser__, namespace, datetime_str, __opt_str__=None
-        ) -> None:
+        @staticmethod
+        def process(datetime_str, dest):
+            if isinstance(datetime_str, datetime):
+                return datetime_str
+
             def parse_datetime(datetime_: str) -> datetime:
                 for possible_format in formats:
                     try:
@@ -259,14 +257,22 @@ def make_datetime_action(formats: list[str]):
                     except ValueError:
                         pass
 
-                raise PlatitudeError("Could not parse datetime.")
+                e_ = f"argument {dest}: invalid datetime format supplied: '{datetime_str}'"
+                raise PlatitudeError(e_)
 
-            setattr(namespace, self.dest, parse_datetime(datetime_str))
+            out = parse_datetime(datetime_str)
+            return out
+
+        def __call__(
+            self, __parser__, namespace, datetime_str, option_string=None
+        ) -> None:
+            out = self.process(datetime_str, self.dest)
+            setattr(namespace, self.dest, out)
 
     return _DatetimeAction
 
 
-def make_enum_action(enum_, enum_value_type):
+def make_enum_action(enum_):
     class _EnumAction(argparse.Action):
         def __call__(self, __parser__, namespace, enum_str, option_string=None) -> None:
             def find_enum_field(value):
@@ -276,38 +282,56 @@ def make_enum_action(enum_, enum_value_type):
 
             out = find_enum_field(enum_str)
             # TODO: Only str and int supported
-            setattr(namespace, self.dest, enum_value_type(out))
+            setattr(namespace, self.dest, out)
 
     return _EnumAction
 
 
 class _FloatAction(argparse.Action):
-    def __call__(self, __parser__, namespace, float_str, option_string=None) -> None:
+    @staticmethod
+    def process(float_str, dest):
         try:
             out = float(float_str)
         except ValueError:
-            e_ = f"argument {self.dest}: invalid float value: '{float_str}'"
+            e_ = f"argument {dest}: invalid float value: '{float_str}'"
             raise PlatitudeError(e_)
+        return out
+
+    def __call__(self, __parser__, namespace, float_str, option_string=None) -> None:
+        out = self.process(float_str, self.dest)
         setattr(namespace, self.dest, out)
 
 
 class _IntAction(argparse.Action):
-    def __call__(self, __parser__, namespace, int_str, option_string=None) -> None:
+    @staticmethod
+    def process(int_str, dest):
         try:
             out = int(int_str)
         except ValueError:
-            e_ = f"argument {self.dest}: invalid int value: '{int_str}'"
+            e_ = f"argument {dest}: invalid int value: '{int_str}'"
             raise PlatitudeError(e_)
+        return out
+
+    def __call__(self, __parser__, namespace, int_str, option_string=None) -> None:
+        out = self.process(int_str, self.dest)
         setattr(namespace, self.dest, out)
 
 
 class _UUIDAction(argparse.Action):
-    def __call__(self, __parser__, namespace, uuid_str, option_string=None) -> None:
+    @staticmethod
+    def process(uuid_str, dest):
+        if isinstance(uuid_str, UUID):
+            return uuid_str
         try:
             out = UUID(uuid_str)
         except ValueError:
-            e_ = f"argument {self.dest}: invalid uuid value: '{uuid_str}'"
+            e_ = f"argument {dest}: invalid uuid value: '{uuid_str}'"
             raise PlatitudeError(e_)
+        return out
+
+    def __call__(self, __parser__, namespace, uuid_str, option_string=None) -> None:
+        out = self.process(uuid_str, self.dest)
+
         setattr(namespace, self.dest, out)
 
 
@@ -320,7 +344,8 @@ def make_path_action(
     resolve_path: bool = False,
 ) -> type[argparse.Action]:
     class _PathAction(argparse.Action):
-        def __call__(self, __parser__, namespace, path_str, option_string=None) -> None:
+        @staticmethod
+        def process(path_str, dest):
             path = Path(path_str)
             resolved_path = path.resolve()
 
@@ -328,24 +353,28 @@ def make_path_action(
                 path = path.resolve()
 
             if exists and not resolved_path.exists():
-                e_ = f"Invalid value for '{self.dest}': Path {path} does not exist."
+                e_ = f"Invalid value for '{dest}': Path {path} does not exist."
                 raise PlatitudeError(e_)
 
             if not file_okay and resolved_path.is_file():
-                e_ = f"Invalid value for '{self.dest}': File {path} is a file."
+                e_ = f"Invalid value for '{dest}': File {path} is a file."
                 raise PlatitudeError(e_)
 
             if not dir_okay and resolved_path.is_dir():
-                e_ = f"Invalid value for '{self.dest}': File {path} is a directory."
+                e_ = f"Invalid value for '{dest}': File {path} is a directory."
                 raise PlatitudeError(e_)
 
             if readable and not os.access(path, os.R_OK):
-                e_ = f"Invalid value for '{self.dest}': Path {path} is not readable."
+                e_ = f"Invalid value for '{dest}': Path {path} is not readable."
                 raise PlatitudeError(e_)
 
             if writable and not os.access(path, os.W_OK):
-                e_ = f"Invalid value for '{self.dest}': Path {path} is not writable."
+                e_ = f"Invalid value for '{dest}': Path {path} is not writable."
                 raise PlatitudeError(e_)
+            return path
+
+        def __call__(self, __parser__, namespace, path_str, option_string=None) -> None:
+            path = self.process(path_str, self.dest)
 
             setattr(namespace, self.dest, path)
 
