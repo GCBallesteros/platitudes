@@ -114,7 +114,13 @@ def _get_default(param, envvar: str | None, action) -> tuple[Any, str]:
     optional_prefix = ""
     default = None
     if _has_default_value(param):
-        default = action.process(param.default, "")
+        if isinstance(param.default, bool):
+            # NOTE: bool is special because we are not using an action defined
+            # by us
+            default = param.default
+        else:
+            default = action.process(param.default, "")
+
         optional_prefix = "--"
 
         # Use the envvar if it is available
@@ -274,14 +280,19 @@ def make_datetime_action(formats: list[str]):
 
 def make_enum_action(enum_):
     class _EnumAction(argparse.Action):
-        def __call__(self, __parser__, namespace, enum_str, option_string=None) -> None:
+        @staticmethod
+        def process(enum_str, dest):
             def find_enum_field(value):
                 for member in enum_:
                     if str(member.value) == value:
                         return member
 
             out = find_enum_field(enum_str)
+            return out
+
+        def __call__(self, __parser__, namespace, enum_str, option_string=None) -> None:
             # TODO: Only str and int supported
+            out = self.process(enum_str, self.dest)
             setattr(namespace, self.dest, out)
 
     return _EnumAction
