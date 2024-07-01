@@ -249,7 +249,7 @@ class PlatitudeError(Exception):
 def make_datetime_action(formats: list[str]):
     class _DatetimeAction(argparse.Action):
         def __call__(
-            self, _parser, namespace, datetime_value, _option_string=None
+            self, __parser__, namespace, datetime_str, __opt_str__=None
         ) -> None:
             def parse_datetime(datetime_: str) -> datetime:
                 for possible_format in formats:
@@ -261,20 +261,20 @@ def make_datetime_action(formats: list[str]):
 
                 raise PlatitudeError("Could not parse datetime.")
 
-            setattr(namespace, self.dest, parse_datetime(datetime_value))
+            setattr(namespace, self.dest, parse_datetime(datetime_str))
 
     return _DatetimeAction
 
 
 def make_enum_action(enum_, enum_value_type):
     class _EnumAction(argparse.Action):
-        def __call__(self, _parser, namespace, enum_value, _option_string=None) -> None:
+        def __call__(self, __parser__, namespace, enum_str, option_string=None) -> None:
             def find_enum_field(value):
                 for member in enum_:
                     if str(member.value) == value:
                         return member
 
-            out = find_enum_field(enum_value)
+            out = find_enum_field(enum_str)
             # TODO: Only str and int supported
             setattr(namespace, self.dest, enum_value_type(out))
 
@@ -282,27 +282,27 @@ def make_enum_action(enum_, enum_value_type):
 
 
 class _FloatAction(argparse.Action):
-    def __call__(self, _parser, namespace, float_value, _option_string=None) -> None:
+    def __call__(self, __parser__, namespace, float_str, option_string=None) -> None:
         try:
-            out = float(float_value)
+            out = float(float_str)
         except ValueError:
-            e_ = f"argument {self.dest}: invalid float value: '{float_value}'"
+            e_ = f"argument {self.dest}: invalid float value: '{float_str}'"
             raise PlatitudeError(e_)
         setattr(namespace, self.dest, out)
 
 
 class _IntAction(argparse.Action):
-    def __call__(self, _parser, namespace, int_value, _option_string=None) -> None:
+    def __call__(self, __parser__, namespace, int_str, option_string=None) -> None:
         try:
-            out = int(int_value)
+            out = int(int_str)
         except ValueError:
-            e_ = f"argument {self.dest}: invalid int value: '{int_value}'"
+            e_ = f"argument {self.dest}: invalid int value: '{int_str}'"
             raise PlatitudeError(e_)
         setattr(namespace, self.dest, out)
 
 
 class _UUIDAction(argparse.Action):
-    def __call__(self, _parser, namespace, uuid_str, _option_string=None) -> None:
+    def __call__(self, __parser__, namespace, uuid_str, option_string=None) -> None:
         try:
             out = UUID(uuid_str)
         except ValueError:
@@ -320,7 +320,7 @@ def make_path_action(
     resolve_path: bool = False,
 ) -> type[argparse.Action]:
     class _PathAction(argparse.Action):
-        def __call__(self, _parser, namespace, path_str, _option_string=None) -> None:
+        def __call__(self, __parser__, namespace, path_str, option_string=None) -> None:
             path = Path(path_str)
             resolved_path = path.resolve()
 
