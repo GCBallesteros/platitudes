@@ -187,6 +187,8 @@ def _get_default(param, envvar: str | None, action, param_name: str) -> tuple[An
 
 
 class Platitudes:
+    """Collect multiple commands into a single app."""
+
     def __init__(self):
         self._registered_commands: dict[str, Callable] = {}
         self._parser = argparse.ArgumentParser()
@@ -225,6 +227,7 @@ class Platitudes:
 
 
 def run(main: Callable, arguments: list[str] | None) -> None:
+    """Create a CLI program out of a single function."""
     cmd_parser = argparse.ArgumentParser()
     cmd_parser = _create_parser(main, cmd_parser)
 
@@ -257,6 +260,46 @@ class Argument:
         # DateTime
         formats: list[str] | None = None,
     ):
+        """
+        Annotation to extend the behvaviour of arguments and provide help strings.
+
+        Any variable can be read from an environment variable using the
+        `envvar` parameter and have a help string provided for it using `help`.
+        In addittion to this we can also provide additional checks and
+        behaviours for the following types:
+        - pathlib.Path
+        - datetime.datetime
+
+        Parameters
+        ----------
+        help
+            The help string that will be presented by the CLI help.
+        envvar
+            If supplied we will try to get the value of the parameter
+            from the environment variable being pointed at.
+        exists
+            If `True` argument parsing will file if the path provided
+            corresponds to a non-existent file or directory.
+        file_okay
+            If `False` argument parsing will file if the path provided
+            corresponds to a file.
+        dir_okay
+            If `False` argument parsing will file if the path provided
+            corresponds to a directory.
+        writable
+            Fail argument parsing if the path doesn't correspond to a
+            writable file or directory.
+        readable
+            Fail argument parsing if the path doesn't correspond to a
+            readable file or directory.
+        resolve_path
+            Whether to resolve the path supplied before passing it to the
+            function.
+        formats
+            A list of format strings that can be used in the CLI to enter
+            timestamps
+
+        """
         self.help = help
         self.envvar = envvar
 
@@ -277,4 +320,5 @@ class Argument:
 
 
 class Exit(Exception):
+    """Raise if you want to early quit a Platitude CLI program without errorin out."""
     pass
