@@ -116,7 +116,7 @@ def _handle_type_specific_behaviour(
     return action, choices
 
 
-def _get_default(param, envvar: str | None, action) -> tuple[Any, str]:
+def _get_default(param, envvar: str | None, action, param_name: str) -> tuple[Any, str]:
     optional_prefix = ""
     default = None
     if _has_default_value(param):
@@ -125,14 +125,16 @@ def _get_default(param, envvar: str | None, action) -> tuple[Any, str]:
             # by us
             default = param.default
         else:
-            default = action.process(param.default, "")
+            default = action.process(param.default, param_name.replace("_", "-"))
 
         optional_prefix = "--"
 
         # Use the envvar if it is available
         if envvar is not None:
             try:
-                default = action.process(os.environ[envvar], "")
+                default = action.process(
+                    os.environ[envvar], param_name.replace("_", "-")
+                )
             except KeyError:
                 pass
     else:
@@ -192,7 +194,7 @@ class Platitudes:
             help = extra_annotations.help
             envvar = extra_annotations.envvar
 
-            default, optional_prefix = _get_default(param, envvar, action)
+            default, optional_prefix = _get_default(param, envvar, action, param_name)
 
             cmd_parser.add_argument(
                 f"{optional_prefix}{param_name.replace('_', '-')}",
