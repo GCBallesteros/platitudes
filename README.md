@@ -27,7 +27,7 @@ def build_profile(
     photo_file: Annotated[
         Path, pl.Argument(exists=True)  # Paths can be checked for existence
     ],
-    favorite_color: Color = Color.Red,  # Optional enum argument with a default
+    favorite_color: Color = Color.RED,  # Optional enum argument with a default
 ):
     print(f"The user is named {name} {surname} and his favorite color is {favorite_color}")
     print(f"Age: {age}")
@@ -38,4 +38,11 @@ def build_profile(
 
 if __name__ == "__main__":
     app()
+```
+
+You can then show the documentation for `build_profile`:
+
+```
+# python build_profile --help
+
 ```
