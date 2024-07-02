@@ -126,6 +126,22 @@ def test_enum():
         assert wrapped_error.value.code == 2
 
 
+def test_enum2():
+    """Check positional enums"""
+    app = pl.Platitudes()
+
+    class Color(Enum):
+        RED = 0
+        GREEN = 1
+        BLUE = 2
+
+    @app.command
+    def _(color: Color = Color.RED):
+        assert Color.RED is color
+
+    app(["prog", "_"])
+
+
 def test_datetime():
     """Check datetimes"""
     app = pl.Platitudes()
@@ -214,3 +230,11 @@ def test_path_that_does_not_exist():
 
     with pytest.raises(SystemExit):
         app(["prog", "_", "LICENSE_"])
+
+
+def test_standalone_cli():
+    def _(age: int = 14):
+        assert isinstance(age, int)
+        assert age == 14
+
+    pl.run(_, ["prog", "--age", "14"])

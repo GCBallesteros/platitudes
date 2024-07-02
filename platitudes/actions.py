@@ -41,6 +41,9 @@ def make_enum_action(enum_):
     class _EnumAction(argparse.Action):
         @staticmethod
         def process(enum_str, dest):
+            if isinstance(enum_str, enum_):
+                return enum_str
+
             def find_enum_field(value):
                 for member in enum_:
                     if str(member.value) == value:
@@ -50,7 +53,6 @@ def make_enum_action(enum_):
             return out
 
         def __call__(self, __parser__, namespace, enum_str, option_string=None) -> None:
-            # TODO: Only str and int supported
             out = self.process(enum_str, self.dest)
             setattr(namespace, self.dest, out)
 
@@ -103,6 +105,18 @@ class _UUIDAction(argparse.Action):
         out = self.process(uuid_str, self.dest)
 
         setattr(namespace, self.dest, out)
+
+
+class _StrAction(argparse.Action):
+    @staticmethod
+    def process(str_, dest):
+        return str_
+
+    def __call__(self, __parser__, namespace, int_str, option_string=None) -> None:
+        out = self.process(int_str, self.dest)
+        setattr(namespace, self.dest, out)
+
+    pass
 
 
 def make_path_action(

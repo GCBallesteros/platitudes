@@ -21,7 +21,7 @@ def cmd2(
     surname: str,  # No help but still positional
     photo_file: Annotated[
         Path, pl.Argument(help="Path to the photo file", exists=True)
-    ] = Path("./my_pic.jpeg"),
+    ] = Path("./LICENSE"),
 ):
     print(f"My name {name} {surname}")
     print(f"My picture: {photo_file}")

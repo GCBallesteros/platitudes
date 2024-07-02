@@ -40,9 +40,28 @@ if __name__ == "__main__":
     app()
 ```
 
-You can then show the documentation for `build_profile`:
+You can then show the help for `build_profile`:
 
 ```
-# python build_profile --help
+❯ python build_profile --help
+usage: examples.py build_profile [-h] [--favorite-color {0,1,2}] name surname age photo-file
 
+positional arguments:
+  name                  User name
+  surname
+  age
+  photo-file
+
+options:
+  -h, --help            show this help message and exit
+  --favorite-color {0,1,2}
+```
+
+And you can run the CLI with the positional and perhaps optional arguments:
+
+```
+❯ python example/examples.py build_profile G Ballesteros 42 ./LICENSE
+The user is named G Ballesteros and his favorite color is Color.RED
+Age: 3
+Picture stored at: LICENSE
 ```

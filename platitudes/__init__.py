@@ -17,6 +17,7 @@ from uuid import UUID
 from .actions import (
     _FloatAction,
     _IntAction,
+    _StrAction,
     _UUIDAction,
     make_datetime_action,
     make_enum_action,
@@ -26,8 +27,40 @@ from .errors import PlatitudeError
 
 DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
-# TODO: Test internal methods: _is_maybe, _unwrap_maybe, _handle_maybe
-# TODO: Internal todo in enum
+
+def _create_parser(
+    main: Callable, cmd_parser: argparse.ArgumentParser
+) -> argparse.ArgumentParser:
+    cmd_signature = inspect.signature(main)
+
+    for param_name, param in cmd_signature.parameters.items():
+        help = None
+        envvar = None
+
+        if (annot := param.annotation) is not inspect._empty:
+            pass
+        else:
+            annot = str
+
+        type_, extra_annotations = _unwrap_annotated(annot)
+        action, choices = _handle_type_specific_behaviour(
+            _handle_maybe(type_, param), param, extra_annotations
+        )
+
+        help = extra_annotations.help
+        envvar = extra_annotations.envvar
+
+        default, optional_prefix = _get_default(param, envvar, action, param_name)
+
+        cmd_parser.add_argument(
+            f"{optional_prefix}{param_name.replace('_', '-')}",
+            type=str,
+            default=default,
+            help=help,
+            action=action,
+            choices=choices,
+        )
+    return cmd_parser
 
 
 def _has_default_value(param: inspect.Parameter):
@@ -107,7 +140,6 @@ def _handle_type_specific_behaviour(
         choices = [str(e.value) for e in type_]
         try:
             action = make_enum_action(type_)
-        # TODO: move to action
         except IndexError:
             PlatitudeError("Enum must have at least one choice")
     elif type_ is Path:
@@ -118,6 +150,8 @@ def _handle_type_specific_behaviour(
         action = _IntAction
     elif type_ is float:
         action = _FloatAction
+    elif type_ is str:
+        action = _StrAction
     elif type_ is UUID:
         action = _UUIDAction
 
@@ -183,39 +217,29 @@ class Platitudes:
 
     def command(self, function: Callable) -> Callable:
         cmd_parser = self._subparsers.add_parser(function.__name__)
-        cmd_signature = inspect.signature(function)
+        cmd_parser = _create_parser(function, cmd_parser)
 
-        for param_name, param in cmd_signature.parameters.items():
-            help = None
-            envvar = None
-
-            if (annot := param.annotation) is not inspect._empty:
-                pass
-            else:
-                annot = str
-
-            type_, extra_annotations = _unwrap_annotated(annot)
-            action, choices = _handle_type_specific_behaviour(
-                _handle_maybe(type_, param), param, extra_annotations
-            )
-
-            help = extra_annotations.help
-            envvar = extra_annotations.envvar
-
-            default, optional_prefix = _get_default(param, envvar, action, param_name)
-
-            cmd_parser.add_argument(
-                f"{optional_prefix}{param_name.replace('_', '-')}",
-                type=str,
-                default=default,
-                help=help,
-                action=action,
-                choices=choices,
-            )
-
-            self._registered_commands[function.__name__] = function
+        self._registered_commands[function.__name__] = function
 
         return function
+
+
+def run(main: Callable, arguments: list[str] | None) -> None:
+    cmd_parser = argparse.ArgumentParser()
+    cmd_parser = _create_parser(main, cmd_parser)
+
+    if arguments is None:
+        arguments = sys.argv
+    else:
+        pass
+
+    args_ = cmd_parser.parse_args(arguments[1:])
+    try:
+        # NOTE: argparse insists on replacing _ with - for positional arguments
+        # so we need to undo it
+        main(**{k.replace("-", "_"): v for k, v in vars(args_).items()})
+    except Exit:
+        sys.exit(0)
 
 
 class Argument:
