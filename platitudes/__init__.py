@@ -16,6 +16,11 @@ from uuid import UUID
 
 DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
+# TODO: Fix and test envvars
+# TODO: self.dest
+# TODO: Test internal methods: _is_maybe, _unwrap_maybe, _handle_maybe
+# TODO: Internal todo in enum
+
 
 def _has_default_value(param: inspect.Parameter):
     return param.default is not inspect._empty
@@ -90,14 +95,15 @@ def _handle_type_specific_behaviour(
             )
             raise ValueError(e_)
         action = argparse.BooleanOptionalAction
-    elif type_ is Path:
-        action = extra_annotations._path_action
     elif issubclass(type_, Enum):
         choices = [str(e.value) for e in type_]
         try:
             action = make_enum_action(type_)
+        # TODO: move to action
         except IndexError:
             PlatitudeError("Enum must have at least one choice")
+    elif type_ is Path:
+        action = extra_annotations._path_action
     elif type_ is datetime:
         action = extra_annotations._datetime_action
     elif type_ is int:
@@ -126,7 +132,7 @@ def _get_default(param, envvar: str | None, action) -> tuple[Any, str]:
         # Use the envvar if it is available
         if envvar is not None:
             try:
-                default = os.environ[envvar]
+                default = action.process(os.environ[envvar], "")
             except KeyError:
                 pass
     else:

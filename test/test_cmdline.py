@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -7,6 +8,8 @@ from uuid import UUID
 import pytest
 
 import platitudes as pl
+
+os.environ["TEST_DATE"] = "1956-01-31T10:00:00"
 
 
 def test_unannotated():
@@ -157,6 +160,34 @@ def test_datetime():
         assert birthday == datetime(1956, 1, 1)
 
     app(["prog", "___"])
+
+
+def test_datetime_envvar():
+    """Check datetimes"""
+    app = pl.Platitudes()
+
+    @app.command
+    def _(
+        birthday: Annotated[datetime, pl.Argument(envvar="TEST_DATE")] = datetime(
+            1956, 1, 31, 10, 0, 0
+        ),
+    ):
+        assert birthday == datetime(1956, 1, 31, 10, 0, 0)
+
+    app(["prog", "_"])
+
+
+def test_datetime_envvar_no_default():
+    """Check datetimes"""
+    app = pl.Platitudes()
+
+    with pytest.raises(ValueError):
+
+        @app.command
+        def _(birthday: Annotated[datetime, pl.Argument(envvar="TEST_DATE")]):
+            assert birthday == datetime(1956, 1, 31, 10, 0, 0)
+
+        app(["prog", "_"])
 
 
 def test_path_that_exists():
