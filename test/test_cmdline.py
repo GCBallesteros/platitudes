@@ -249,3 +249,16 @@ def test_default_no_annotation():
         assert age == 14
 
     pl.run(_, ["prog"])
+
+
+def test_nonsense_default():
+    """Default values without annotation are passed as is."""
+
+    with pytest.raises(pl.PlatitudeError):
+
+        def _(age: int = "Wut?"):  # pyright: ignore
+            print(age)
+            assert isinstance(age, int)
+            assert age == 14
+
+        pl.run(_, ["prog"])
