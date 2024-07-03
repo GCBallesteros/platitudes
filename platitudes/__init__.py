@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 import argparse
@@ -28,7 +28,6 @@ from .errors import PlatitudeError
 DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
 # TODO: Better and more docs
-# TODO: Update version on pypi
 # TODO: Shown default valid datetime formats
 
 
