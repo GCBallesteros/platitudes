@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
 
 import argparse
@@ -26,6 +26,11 @@ from .actions import (
 from .errors import PlatitudeError
 
 DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
+
+# TODO: Better help strings showing defaults
+# TODO: Better and more docs
+# TODO: Update version on pypi
+# TODO: Shown default valid datetime formats
 
 
 def _create_parser(
@@ -226,7 +231,7 @@ class Platitudes:
         return function
 
 
-def run(main: Callable, arguments: list[str] | None=None) -> None:
+def run(main: Callable, arguments: list[str] | None = None) -> None:
     """Create a CLI program out of a single function."""
     cmd_parser = argparse.ArgumentParser()
     cmd_parser = _create_parser(main, cmd_parser)
@@ -321,4 +326,5 @@ class Argument:
 
 class Exit(Exception):
     """Raise if you want to early quit a Platitude CLI program without errorin out."""
+
     pass
