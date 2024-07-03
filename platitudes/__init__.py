@@ -226,7 +226,7 @@ class Platitudes:
         return function
 
 
-def run(main: Callable, arguments: list[str] | None) -> None:
+def run(main: Callable, arguments: list[str] | None=None) -> None:
     """Create a CLI program out of a single function."""
     cmd_parser = argparse.ArgumentParser()
     cmd_parser = _create_parser(main, cmd_parser)
