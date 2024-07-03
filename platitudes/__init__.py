@@ -52,10 +52,14 @@ def _create_parser(
             _handle_maybe(type_, param), param, extra_annotations
         )
 
-        help = extra_annotations.help
         envvar = extra_annotations.envvar
-
         default, optional_prefix = _get_default(param, envvar, action, param_name)
+
+        help = (
+            "-"
+            if ((default is not None) and (extra_annotations.help is None))
+            else extra_annotations.help
+        )
 
         cmd_parser.add_argument(
             f"{optional_prefix}{param_name.replace('_', '-')}",
@@ -223,7 +227,9 @@ class Platitudes:
             sys.exit(0)
 
     def command(self, function: Callable) -> Callable:
-        cmd_parser = self._subparsers.add_parser(function.__name__)
+        cmd_parser = self._subparsers.add_parser(
+            function.__name__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
         cmd_parser = _create_parser(function, cmd_parser)
 
         self._registered_commands[function.__name__] = function
