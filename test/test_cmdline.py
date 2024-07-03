@@ -238,3 +238,14 @@ def test_standalone_cli():
         assert age == 14
 
     pl.run(_, ["prog", "--age", "14"])
+
+
+def test_default_no_annotation():
+    """Default values without annotation are passed as is."""
+
+    def _(age=14):
+        print(age)
+        assert isinstance(age, int)
+        assert age == 14
+
+    pl.run(_, ["prog"])
