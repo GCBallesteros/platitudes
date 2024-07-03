@@ -27,7 +27,6 @@ from .errors import PlatitudeError
 
 DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
-# TODO: Better help strings showing defaults
 # TODO: Better and more docs
 # TODO: Update version on pypi
 # TODO: Shown default valid datetime formats
@@ -213,8 +212,11 @@ class Platitudes:
             args_ = self._parser.parse_args(arguments[1:])
         except PlatitudeError as e:
             print("\n", e, "\n")
-            # TODO: This error should be the subparser one
-            print(self._parser.format_help())
+            print(
+                self._parser._get_positional_actions()[0]  # pyright: ignore
+                .choices[arguments[1]]
+                .format_help()
+            )
             sys.exit(1)
 
         main_command = self._registered_commands[arguments[1]]
