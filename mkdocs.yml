@@ -3,7 +3,7 @@ site_url: https://mydomain.org/mysite
 repo_url: https://github.com/GCBallesteros/platitudes
 nav:
   - 'Home': index.md
-  - 'Quick Start Guide': quick_start_guide.md
+  - 'Explained Example': quick_start_guide.md
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true

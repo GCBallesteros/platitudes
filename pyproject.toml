@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "platitudes"
-version = "0.2.0"
+version = "1.0.0"
 description = ""
 authors = ["GCBallesteros <dev+github@maxwellrules.com>"]
 readme = "README.md"

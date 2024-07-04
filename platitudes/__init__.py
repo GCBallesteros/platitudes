@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__version__ = "0.2.0"
+__version__ = "1.0.0"
 
 
 import argparse
@@ -227,15 +227,17 @@ class Platitudes:
         except Exit:
             sys.exit(0)
 
-    def command(self, function: Callable) -> Callable:
-        cmd_parser = self._subparsers.add_parser(
-            function.__name__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
-        )
-        cmd_parser = _create_parser(function, cmd_parser)
+    def command(self) -> Callable:
+        def proc_command(function: Callable) -> Callable:
+            cmd_parser = self._subparsers.add_parser(
+                function.__name__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
+            )
+            cmd_parser = _create_parser(function, cmd_parser)
 
-        self._registered_commands[function.__name__] = function
+            self._registered_commands[function.__name__] = function
 
-        return function
+            return function
+        return proc_command
 
 
 def run(main: Callable, arguments: list[str] | None = None) -> None:

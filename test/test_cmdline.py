@@ -16,7 +16,7 @@ def test_unannotated():
     """Untyped inputs should just be treated as strings."""
     app = pl.Platitudes()
 
-    @app.command
+    @app.command()
     def _(name):
         assert isinstance(name, str)
         assert name == "GBallesteros"
@@ -28,7 +28,7 @@ def test_str():
     """ "Check positional strings"""
     app = pl.Platitudes()
 
-    @app.command
+    @app.command()
     def _(name: str):
         assert isinstance(name, str)
         assert name == "GBallesteros"
@@ -40,7 +40,7 @@ def test_int():
     """ "Check positional strings"""
     app = pl.Platitudes()
 
-    @app.command
+    @app.command()
     def _(age: int):
         assert isinstance(age, int)
         assert age == 14
@@ -52,7 +52,7 @@ def test_int_with_default():
     """ "Check positional strings"""
     app = pl.Platitudes()
 
-    @app.command
+    @app.command()
     def _(age: int = 14):
         assert isinstance(age, int)
         assert age == 14
@@ -64,7 +64,7 @@ def test_bool():
     """Check optional boolean."""
     app = pl.Platitudes()
 
-    @app.command
+    @app.command()
     def _(is_rainy: bool = False):
         assert isinstance(is_rainy, bool)
         assert is_rainy
@@ -73,7 +73,7 @@ def test_bool():
 
     with pytest.raises(ValueError):
 
-        @app.command
+        @app.command()
         def __(is_rainy: bool):
             assert isinstance(is_rainy, bool)
             assert not is_rainy
@@ -84,7 +84,7 @@ def test_bool():
 def test_uuid():
     app = pl.Platitudes()
 
-    @app.command
+    @app.command()
     def _(
         book_uuid: UUID,
         another_uuid: UUID = UUID("d48edaa6-871a-4082-a196-4daab372d4a1"),
@@ -112,7 +112,7 @@ def test_enum():
         GREEN = 1
         BLUE = 2
 
-    @app.command
+    @app.command()
     def _(color: Color = Color.RED):
         assert Color.GREEN is color
 
@@ -135,7 +135,7 @@ def test_enum2():
         GREEN = 1
         BLUE = 2
 
-    @app.command
+    @app.command()
     def _(color: Color = Color.RED):
         assert Color.RED is color
 
@@ -146,7 +146,7 @@ def test_datetime():
     """Check datetimes"""
     app = pl.Platitudes()
 
-    @app.command
+    @app.command()
     def _(birthday: datetime):
         assert birthday == datetime(1956, 1, 31, 10, 0, 0)
 
@@ -161,13 +161,13 @@ def test_datetime():
 
     # TEST: Check the previous failed example works if we provide the
     # appropriate format
-    @app.command
+    @app.command()
     def __(birthday: Annotated[datetime, pl.Argument(formats=["%Y-%m"])]):
         assert birthday == datetime(1956, 1, 1)
 
     app(["prog", "__", "1956-01"])
 
-    @app.command
+    @app.command()
     def ___(
         birthday: Annotated[datetime, pl.Argument(formats=["%Y-%m"])] = datetime(
             1956, 1, 1
@@ -182,7 +182,7 @@ def test_datetime_envvar():
     """Check datetimes"""
     app = pl.Platitudes()
 
-    @app.command
+    @app.command()
     def _(
         birthday: Annotated[datetime, pl.Argument(envvar="TEST_DATE")] = datetime(
             1956, 1, 31, 10, 0, 0
@@ -199,7 +199,7 @@ def test_datetime_envvar_no_default():
 
     with pytest.raises(ValueError):
 
-        @app.command
+        @app.command()
         def _(birthday: Annotated[datetime, pl.Argument(envvar="TEST_DATE")]):
             assert birthday == datetime(1956, 1, 31, 10, 0, 0)
 
@@ -209,7 +209,7 @@ def test_datetime_envvar_no_default():
 def test_path_that_exists():
     app = pl.Platitudes()
 
-    @app.command
+    @app.command()
     def _(
         photo_file: Annotated[Path, pl.Argument(exists=True)] = Path(
             __file__
@@ -224,7 +224,7 @@ def test_path_that_exists():
 def test_path_that_does_not_exist():
     app = pl.Platitudes()
 
-    @app.command
+    @app.command()
     def _(photo_file: Annotated[Path, pl.Argument(exists=True)]):
         assert isinstance(photo_file, Path)
 
