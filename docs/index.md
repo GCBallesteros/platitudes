@@ -25,12 +25,12 @@ pl.run(hello_world)
 Now you have a CLI! Let's check out the help:
 
 ```
-❯ python hello_world.py --help        
+❯ python example/hello_world.py --help
 usage: hello_world.py [-h] [--name NAME]
 
 options:
   -h, --help   show this help message and exit
-  --name NAME
+  --name NAME  - (default: World)
 ```
 
 We just have one optional parameter which means that we should be able to run
