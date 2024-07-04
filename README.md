@@ -43,8 +43,8 @@ if __name__ == "__main__":
 You can then show the help for `build_profile`:
 
 ```
-❯ python build_profile --help
-usage: examples.py build_profile [-h] [--favorite-color {0,1,2}] name surname age photo-file
+❯ python example/readme_example.py build_profile --help
+usage: readme_example.py build_profile [-h] [--favorite-color {0,1,2}] name surname age photo-file
 
 positional arguments:
   name                  User name
@@ -55,6 +55,7 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --favorite-color {0,1,2}
+                        - (default: Color.RED)
 ```
 
 And you can run the CLI with the positional and perhaps optional arguments:
