@@ -6,7 +6,7 @@ from uuid import UUID
 
 import platitudes as pl
 
-app = pl.Platitudes()
+app = pl.Platitudes(description="Test programs")
 
 
 @app.command()

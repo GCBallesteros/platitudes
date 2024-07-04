@@ -196,9 +196,9 @@ def _get_default(param, envvar: str | None, action, param_name: str) -> tuple[An
 class Platitudes:
     """Collect multiple commands into a single app."""
 
-    def __init__(self):
+    def __init__(self, description: str | None = None):
         self._registered_commands: dict[str, Callable] = {}
-        self._parser = argparse.ArgumentParser()
+        self._parser = argparse.ArgumentParser(description=description)
         self._subparsers = self._parser.add_subparsers()
 
     def __call__(self, arguments: list[str] | None = None) -> None:
