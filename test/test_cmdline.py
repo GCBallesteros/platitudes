@@ -262,3 +262,16 @@ def test_nonsense_default():
             assert age == 14
 
         pl.run(_, ["prog"])
+
+
+def test_forgot_the_main_command():
+    """ "Check positional strings"""
+    app = pl.Platitudes()
+
+    @app.command()
+    def _(name: str = "G"):
+        assert isinstance(name, str)
+        assert name == "G"
+
+    with pytest.raises(SystemExit):
+        app(["prog"])

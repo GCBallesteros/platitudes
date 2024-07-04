@@ -218,7 +218,11 @@ class Platitudes:
             )
             sys.exit(1)
 
-        main_command = self._registered_commands[arguments[1]]
+        if len(arguments) >= 2:
+            main_command = self._registered_commands[arguments[1]]
+        else:
+            print(self._parser.format_help())
+            sys.exit(1)
 
         try:
             # NOTE: argparse insists on replacing _ with - for positional arguments
@@ -230,13 +234,15 @@ class Platitudes:
     def command(self) -> Callable:
         def proc_command(function: Callable) -> Callable:
             cmd_parser = self._subparsers.add_parser(
-                function.__name__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
+                function.__name__,
+                formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             )
             cmd_parser = _create_parser(function, cmd_parser)
 
             self._registered_commands[function.__name__] = function
 
             return function
+
         return proc_command
 
 
