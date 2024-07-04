@@ -236,6 +236,7 @@ class Platitudes:
             cmd_parser = self._subparsers.add_parser(
                 function.__name__,
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                description=inspect.getdoc(function),
             )
             cmd_parser = _create_parser(function, cmd_parser)
 

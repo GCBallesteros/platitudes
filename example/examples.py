@@ -81,6 +81,7 @@ def build_profile(
     ],
     favorite_color: Color = Color.RED,  # Optional enum argument with a default
 ):
+    """Build a users profile"""
     print(
         f"The user is named {name} {surname} and his favorite color is {favorite_color}"
     )
