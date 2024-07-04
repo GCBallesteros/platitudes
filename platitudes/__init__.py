@@ -249,7 +249,7 @@ class Platitudes:
 
 def run(main: Callable, arguments: list[str] | None = None) -> None:
     """Create a CLI program out of a single function."""
-    cmd_parser = argparse.ArgumentParser()
+    cmd_parser = argparse.ArgumentParser(description=inspect.getdoc(main))
     cmd_parser = _create_parser(main, cmd_parser)
 
     if arguments is None:
