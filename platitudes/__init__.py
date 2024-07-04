@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__version__ = "0.0.1"
+__version__ = "1.0.0"
 
 
 import argparse
@@ -27,6 +27,9 @@ from .errors import PlatitudeError
 
 DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
+# TODO: Better and more docs
+# TODO: Shown default valid datetime formats
+
 
 def _create_parser(
     main: Callable, cmd_parser: argparse.ArgumentParser
@@ -47,10 +50,14 @@ def _create_parser(
             _handle_maybe(type_, param), param, extra_annotations
         )
 
-        help = extra_annotations.help
         envvar = extra_annotations.envvar
-
         default, optional_prefix = _get_default(param, envvar, action, param_name)
+
+        help = (
+            "-"
+            if ((default is not None) and (extra_annotations.help is None))
+            else extra_annotations.help
+        )
 
         cmd_parser.add_argument(
             f"{optional_prefix}{param_name.replace('_', '-')}",
@@ -189,9 +196,9 @@ def _get_default(param, envvar: str | None, action, param_name: str) -> tuple[An
 class Platitudes:
     """Collect multiple commands into a single app."""
 
-    def __init__(self):
+    def __init__(self, description: str | None = None):
         self._registered_commands: dict[str, Callable] = {}
-        self._parser = argparse.ArgumentParser()
+        self._parser = argparse.ArgumentParser(description=description)
         self._subparsers = self._parser.add_subparsers()
 
     def __call__(self, arguments: list[str] | None = None) -> None:
@@ -204,11 +211,18 @@ class Platitudes:
             args_ = self._parser.parse_args(arguments[1:])
         except PlatitudeError as e:
             print("\n", e, "\n")
-            # TODO: This error should be the subparser one
-            print(self._parser.format_help())
+            print(
+                self._parser._get_positional_actions()[0]  # pyright: ignore
+                .choices[arguments[1]]
+                .format_help()
+            )
             sys.exit(1)
 
-        main_command = self._registered_commands[arguments[1]]
+        if len(arguments) >= 2:
+            main_command = self._registered_commands[arguments[1]]
+        else:
+            print(self._parser.format_help())
+            sys.exit(1)
 
         try:
             # NOTE: argparse insists on replacing _ with - for positional arguments
@@ -217,16 +231,22 @@ class Platitudes:
         except Exit:
             sys.exit(0)
 
-    def command(self, function: Callable) -> Callable:
-        cmd_parser = self._subparsers.add_parser(function.__name__)
-        cmd_parser = _create_parser(function, cmd_parser)
+    def command(self) -> Callable:
+        def proc_command(function: Callable) -> Callable:
+            cmd_parser = self._subparsers.add_parser(
+                function.__name__,
+                formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+            )
+            cmd_parser = _create_parser(function, cmd_parser)
 
-        self._registered_commands[function.__name__] = function
+            self._registered_commands[function.__name__] = function
 
-        return function
+            return function
+
+        return proc_command
 
 
-def run(main: Callable, arguments: list[str] | None=None) -> None:
+def run(main: Callable, arguments: list[str] | None = None) -> None:
     """Create a CLI program out of a single function."""
     cmd_parser = argparse.ArgumentParser()
     cmd_parser = _create_parser(main, cmd_parser)
@@ -321,4 +341,5 @@ class Argument:
 
 class Exit(Exception):
     """Raise if you want to early quit a Platitude CLI program without errorin out."""
+
     pass

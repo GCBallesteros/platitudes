@@ -14,7 +14,7 @@ class Color(Enum):
     GREEN = 1
     BLUE = 2
 
-@app.command
+@app.command()
 def build_profile(
     name: Annotated[str, pl.Argument(help="User name")],  # Adding help strings
     surname: str,
