@@ -1,3 +1,5 @@
+"""The most convenient zero dependency CLI builder"""
+
 from __future__ import annotations
 
 __version__ = "1.1.1"
@@ -7,11 +9,12 @@ import argparse
 import inspect
 import os
 import sys
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from types import UnionType
-from typing import Annotated, Any, Callable, Union, get_args, get_origin
+from typing import Annotated, Any, Union, get_args, get_origin
 from uuid import UUID
 
 from .actions import (
@@ -37,7 +40,7 @@ def _create_parser(
     cmd_signature = inspect.signature(main)
 
     for param_name, param in cmd_signature.parameters.items():
-        help = None
+        help = None  # noqa: A001
         envvar = None
 
         if (annot := param.annotation) is not inspect._empty:
@@ -53,7 +56,7 @@ def _create_parser(
         envvar = extra_annotations.envvar
         default, optional_prefix = _get_default(param, envvar, action, param_name)
 
-        help = (
+        help = (  # noqa: A001
             "-"
             if ((default is not None) and (extra_annotations.help is None))
             else extra_annotations.help
@@ -92,7 +95,8 @@ def _unwrap_maybe(type_hint: Any) -> type:
         args = get_args(type_hint)
         return next(arg for arg in args if arg is not type(None))
 
-    raise TypeError("Unhandled type_hint")
+    e_ = "Unhandled type_hint"
+    raise TypeError(e_)
 
 
 def _unwrap_annotated(annot: Any) -> tuple[Any, Argument]:
@@ -225,7 +229,7 @@ class Platitudes:
         ---------
         arguments
             List of strings passed for the CLI parsing. Defaults to using `sys.argv`.
-            
+
         """
         if arguments is None:
             arguments = sys.argv
@@ -321,9 +325,11 @@ def run(main: Callable, arguments: list[str] | None = None) -> None:
 
 
 class Argument:
+    """`Argument` provides extended parsing and validation options."""
+
     def __init__(
         self,
-        help: str | None = None,
+        help: str | None = None,  # noqa: A002
         envvar: str | None = None,
         # Path
         exists: bool = False,
@@ -336,7 +342,6 @@ class Argument:
         formats: list[str] | None = None,
     ):
         """
-        `Argument` provides extended parsing and validation options.
 
 
         `Argument` is always added inside an Annotated type and provides the following
