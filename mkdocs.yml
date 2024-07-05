@@ -18,6 +18,7 @@ nav:
   - Supported Types:
     - str: types/str.md
     - numbers: types/numbers.md
+    - Booleans: types/bool.md
     - datetime: types/datetime.md
     - UUID: types/uuid.md 
     - Path: types/path.md

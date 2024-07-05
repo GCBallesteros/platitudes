@@ -222,6 +222,7 @@ Platitudes.
 - [str](types/str.md)
 - [numbers](types/numbers.md)
 - [datetime](types/datetie.md)
+- [Booleans](types/bool.md)
 - [UUID](types/uuid.md)
 - [Path](types/path.md)
 - [Enum/Choices](types/enum.md)
