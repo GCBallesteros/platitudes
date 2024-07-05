@@ -220,8 +220,7 @@ at the support types documentation to learn more about the capabilities of
 Platitudes.
 
 - [str](types/str.md)
-- [int](types/int.md)
-- [float](types/float.md)
+- [numbers](types/numbers.md)
 - [datetime](types/datetie.md)
 - [UUID](types/uuid.md)
 - [Path](types/path.md)

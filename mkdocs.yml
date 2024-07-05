@@ -17,8 +17,7 @@ nav:
   - 'Extended Example': extended_example.md
   - Supported Types:
     - str: types/str.md
-    - int: types/int.md
-    - float: types/float.md
+    - numbers: types/numbers.md
     - datetime: types/datetime.md
     - UUID: types/uuid.md 
     - Path: types/path.md
