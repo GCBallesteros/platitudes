@@ -21,6 +21,7 @@ nav:
     - float: types/float.md
     - datetime: types/datetime.md
     - UUID: types/uuid.md 
+    - Path: types/path.md
     - Enum/Choices: types/enum.md
   - API:
     - Platitudes: api/platitudes.md
