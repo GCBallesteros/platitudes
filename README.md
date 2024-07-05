@@ -1,4 +1,7 @@
 # Platitudes
+<h4 align="center">
+  <a href="https://platitudes.maxwellrules.com">Documentation</a>
+</h4>
 
 A zero dependency clone of Typer. The most convenient way to make CLI out of your programs.
 
