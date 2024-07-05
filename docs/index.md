@@ -11,6 +11,19 @@ you will immediately feel at home with Platitudes.
 - Easy to use
 - Minimal boilerplate
 
+
+## Installation
+
+Platitudes is available on [pypi](https://pypi.org/project/platitudes/):
+
+```
+pip install platitudes
+```
+
+if you really want to avoid pulling code from the internet you can just vendor
+it into your project by copying the `platitudes` folder into it. As long as you
+are running Python>=3.10 everything should be fine.
+
 ## Hello world example
 
 ```python
