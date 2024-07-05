@@ -1,3 +1,12 @@
+"""Actions used to parse the input values.
+
+Platitudes leverages the use of the action parameter in argparse parsers to
+take complete control of how different values are parsed. See the
+argparse documentation for more details.
+
+https://docs.python.org/3/library/argparse.html#action-classes
+"""
+
 import argparse
 import os
 from datetime import datetime
@@ -8,6 +17,8 @@ from .errors import PlatitudeError
 
 
 def make_datetime_action(formats: list[str]):
+    """Produces a class responsible for parsing datetimes."""
+
     class _DatetimeAction(argparse.Action):
         @staticmethod
         def process(datetime_str, dest):
@@ -17,12 +28,17 @@ def make_datetime_action(formats: list[str]):
             def parse_datetime(datetime_: str) -> datetime:
                 for possible_format in formats:
                     try:
-                        parsed_datetime = datetime.strptime(datetime_, possible_format)
+                        # If you want non-naive datetimes you will need to specify
+                        # your own formatters.
+                        parsed_datetime = datetime.strptime(datetime_, possible_format)  # noqa: DTZ007
                         return parsed_datetime
                     except ValueError:
                         pass
 
-                e_ = f"argument {dest}: invalid datetime format supplied: '{datetime_str}'"
+                e_ = (
+                    f"argument {dest}: invalid datetime format supplied:"
+                    f" '{datetime_str}'\n Only the following are supported: {formats}"
+                )
                 raise PlatitudeError(e_)
 
             out = parse_datetime(datetime_str)
@@ -38,6 +54,7 @@ def make_datetime_action(formats: list[str]):
 
 
 def make_enum_action(enum_):
+    """Produces a class responsible for parsing enums."""
     class _EnumAction(argparse.Action):
         @staticmethod
         def process(enum_str, dest):
@@ -127,6 +144,7 @@ def make_path_action(
     readable: bool = True,
     resolve_path: bool = False,
 ) -> type[argparse.Action]:
+    """Produces a class responsible for parsing paths."""
     class _PathAction(argparse.Action):
         @staticmethod
         def process(path_str, dest):
