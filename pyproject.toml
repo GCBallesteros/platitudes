@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "platitudes"
-version = "1.1.0"
+version = "1.1.1"
 description = ""
 authors = ["GCBallesteros <dev+github@maxwellrules.com>"]
 readme = "README.md"
@@ -22,7 +22,6 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-mkdocstrings = {extras = ["python"], version = "^0.25.1"}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -32,6 +31,7 @@ pytest = "^8.2.2"
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.6.0"
 mkdocs-material = "^9.5.28"
+mkdocstrings = {extras = ["python"], version = "^0.25.1"}
 
 [build-system]
 requires = ["poetry-core"]
