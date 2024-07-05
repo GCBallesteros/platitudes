@@ -2,6 +2,17 @@
 
 A zero dependency clone of Typer. The most convenient way to make CLI out of your programs.
 
+## Installation
+
+Platitudes is available on [pypi](https://pypi.org/project/platitudes/):
+
+```
+pip install platitudes
+```
+
+if you really want to avoid pulling code from the internet you can just vendor
+it into your project by copying the `platitudes` folder into it. As long as you
+are running Python>=3.10 everything should be fine.
 
 ## Quick Start
 
