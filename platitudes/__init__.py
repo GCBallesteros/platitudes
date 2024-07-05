@@ -285,18 +285,23 @@ class Argument:
         formats: list[str] | None = None,
     ):
         """
-        Annotation to extend the behvaviour of arguments and provide help strings.
+        `Argument` provides extended parsing and validation options.
 
-        Any variable can be read from an environment variable using the
-        `envvar` parameter and have a help string provided for it using `help`.
-        In addittion to this we can also provide additional checks and
-        behaviours for the following types:
-        - pathlib.Path
-        - datetime.datetime
+        
+        `Argument` is always added inside an Annotated type and provides the following
+        functionality:
+
+        - Adding help lines to the output of the `--help` option.
+        - Reading parameters from environment variables.
+        - Adding validation options for parsed
+          [`pathlib.Path`](https://docs.python.org/3/library/pathlib.html#basic-use)
+        - Modifying the accepted
+          [datetime.datetime](https://docs.python.org/3/library/datetime.html#datetime-objects)
+          for the CLI.
 
         Parameters
         ----------
-        help
+        help: str
             The help string that will be presented by the CLI help.
         envvar
             If supplied we will try to get the value of the parameter
@@ -344,6 +349,29 @@ class Argument:
 
 
 class Exit(Exception):
-    """Raise if you want to early quit a Platitude CLI program without errorin out."""
+    """Raise to early quit a Platitude CLI program without erroring out.
+
+    There are occasions in which one might want to quit middway the execution in
+    a clean way. This is accomplished by raising the `platitudes.Exit` exception.
+    This will be automatically catched by an internal `try/except` block and exit
+    with code 0 (success).
+
+    Example
+    -------
+    ```python
+    import platitudes as pl
+
+    def early_exit(processing_level: str):
+        match processing_level:
+            case "simple":
+                print("I can do simple!")
+            case _:
+                print("Too much for me")
+                raise pl.Exit()
+
+    pl.run(early_exit)
+    ```
+
+    """
 
     pass

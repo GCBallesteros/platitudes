@@ -1,9 +1,32 @@
 site_name: Platitudes
-site_url: https://mydomain.org/mysite
+site_url: https://platitudes.maxwellrules.com
 repo_url: https://github.com/GCBallesteros/platitudes
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            show_source: false
+            ignore_init_summary: false
+            merge_init_into_class: true
+            separate_signature: true
+            show_signature_annotations: true
 nav:
   - 'Home': index.md
-  - 'Explained Example': quick_start_guide.md
+  - 'Extended Example': extended_example.md
+  - Supported Types:
+    - str: types/str.md
+    - int: types/int.md
+    - float: types/float.md
+    - datetime: types/datetime.md
+    - UUID: types/uuid.md 
+    - Enum/Choices: types/enum.md
+  - API:
+    - Platitudes: api/platitudes.md
+    - Argument: api/argument.md
+    - Exit: api/exit.md
+
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
@@ -12,6 +35,8 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  - pymdownx.details
+  - admonition
 theme:
   icon:
     repo: fontawesome/brands/github

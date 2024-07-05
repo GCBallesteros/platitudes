@@ -51,4 +51,5 @@ Hello ⭐!
 The key takeaway is that we can generate create CLI with zero boilerplate by
 calling `pl.run` and letting it figure it out from the type hints.
 
-For a more elaborate example check out the [Quick Start Guide](quick_start_guide.md)
+Next move into the  [Extended Example](extended_example.md) were a more
+elaborate CLI is built and explained in detail.
