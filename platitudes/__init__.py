@@ -194,14 +194,39 @@ def _get_default(param, envvar: str | None, action, param_name: str) -> tuple[An
 
 
 class Platitudes:
-    """Collect multiple commands into a single app."""
+    """The easiest way to create CLI applications.
+
+    `Platitudes` instances collect several CLI commands under a single application.
+    They can then be accessed by calling them using the original function name.
+
+    """
 
     def __init__(self, description: str | None = None):
+        """
+        Parameters
+        ----------
+        description
+            The description that will be shown when we run the help for the whole
+            application.
+        """
         self._registered_commands: dict[str, Callable] = {}
         self._parser = argparse.ArgumentParser(description=description)
         self._subparsers = self._parser.add_subparsers()
 
     def __call__(self, arguments: list[str] | None = None) -> None:
+        """Runs the CLI program.
+
+        By default we run with the arguments passed to the CLI, that is,
+        `sys.argv`, and this is what you want 99% of the time. You can however
+        pass all the commands as a list of strings, this is the mechanims used
+        internally for testing the code.
+
+        Parameters
+        ---------
+        arguments
+            List of strings passed for the CLI parsing. Defaults to using `sys.argv`.
+            
+        """
         if arguments is None:
             arguments = sys.argv
         else:
@@ -232,6 +257,32 @@ class Platitudes:
             sys.exit(0)
 
     def command(self) -> Callable:
+        """Add a function to the app.
+
+        The function will be accessible from the CLI using the original's
+        function name. It is most often used as a decorator. The decorated
+        function is not modified in any way and therefore can be used normally
+        within your program. This is useful when we want to build CLI out of
+        code that we would like to reuse for building a library.
+
+        Example
+        -------
+        ```python
+        import platitudes as pl
+
+        app = pl.Platitudes(description="Say hello and goodbye")
+
+        @app.command()
+        def hello(name: str):
+            print(f"Hello {name}")
+
+
+        @app.command()
+        def goodbye(name: str):
+            print(f"Goodbye {name}")
+        ```
+        """
+
         def proc_command(function: Callable) -> Callable:
             cmd_parser = self._subparsers.add_parser(
                 function.__name__,
@@ -287,7 +338,7 @@ class Argument:
         """
         `Argument` provides extended parsing and validation options.
 
-        
+
         `Argument` is always added inside an Annotated type and provides the following
         functionality:
 
