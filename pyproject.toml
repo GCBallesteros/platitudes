@@ -1,9 +1,24 @@
 [tool.poetry]
 name = "platitudes"
-version = "1.0.0"
+version = "1.1.0"
 description = ""
 authors = ["GCBallesteros <dev+github@maxwellrules.com>"]
 readme = "README.md"
+license = "MIT"
+homepage = "https://platitudes.maxwellrules.com"
+classifiers = [
+    "Topic :: Software Development",
+    "Topic :: Utilities",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
