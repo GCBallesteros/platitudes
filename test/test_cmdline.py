@@ -275,3 +275,17 @@ def test_forgot_the_main_command():
 
     with pytest.raises(SystemExit):
         app(["prog"])
+
+
+def test_maybe_parameters():
+    """Check we can pass None"""
+
+    def _(n_days: int | None = None):
+        assert n_days is None
+
+    pl.run(_, ["prog"])
+
+    def _(n_days: int | None = 3):
+        assert n_days is 3
+
+    pl.run(_, ["prog"])

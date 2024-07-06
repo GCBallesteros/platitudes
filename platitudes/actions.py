@@ -55,6 +55,7 @@ def make_datetime_action(formats: list[str]):
 
 def make_enum_action(enum_):
     """Produces a class responsible for parsing enums."""
+
     class _EnumAction(argparse.Action):
         @staticmethod
         def process(enum_str, dest):
@@ -145,6 +146,7 @@ def make_path_action(
     resolve_path: bool = False,
 ) -> type[argparse.Action]:
     """Produces a class responsible for parsing paths."""
+
     class _PathAction(argparse.Action):
         @staticmethod
         def process(path_str, dest):

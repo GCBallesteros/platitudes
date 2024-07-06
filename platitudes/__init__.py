@@ -173,7 +173,9 @@ def _get_default(param, envvar: str | None, action, param_name: str) -> tuple[An
     optional_prefix = ""
     default = None
     if _has_default_value(param):
-        if isinstance(param.default, bool):
+        if param.default is None:
+            pass
+        elif isinstance(param.default, bool):
             # NOTE: bool is special because we are not using an action defined
             # by us
             default = param.default
