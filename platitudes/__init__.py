@@ -50,7 +50,7 @@ def _create_parser(
 
         type_, extra_annotations = _unwrap_annotated(annot)
         action, choices = _handle_type_specific_behaviour(
-            _handle_maybe(type_, param), param, extra_annotations
+            _handle_maybe(type_, param), extra_annotations
         )
 
         envvar = extra_annotations.envvar
@@ -150,7 +150,7 @@ def _handle_maybe(type_, param):
 
 
 def _handle_type_specific_behaviour(
-    type_, param, extra_annotations
+    type_, extra_annotations
 ) -> tuple[str | type[argparse.Action], list[Any] | None]:
     action: str | type[argparse.Action] = "store"
     choices = None
