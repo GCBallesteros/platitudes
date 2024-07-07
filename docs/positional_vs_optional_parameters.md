@@ -27,6 +27,9 @@ cli <positional1> <positional2>  --second-optional <second-optional> --first-opt
     a variable that maybe contains a value. These, or equivalently `x | None` are
     a bit special in a Platitudes CLI program as will be described below.
 
+
+## Postional and Optional Arguments in Platitudes
+
 Platitudes CLIs are created by registering Python functions with Platitudes
 apps or calling the `platitudes.run` function on them. Each of the parameters
 of the function will end up mapping to a CLI parameter. Whether they end up
@@ -38,9 +41,9 @@ underscores, `_` for `-` dashes.
 
 !!! note
 
-    Platitudes uses argparse under the hood which means that you can use all the
-    tricks that work there. For example not spelling out optional parameters
-    in full and just providing a unique prefix.
+    Booleans are a bit special and directly contradict the previous paragraph
+    in their behaviour. See the [boolean type documentation](types/bool.md)
+    for more details.
 
 ## `typing.Optional` parameters
 
