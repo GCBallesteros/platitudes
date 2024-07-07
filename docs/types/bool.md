@@ -25,11 +25,11 @@ below these would be:
 import platitudes as pl
 
 
-def _(is_rainy: bool):
+def weather(is_rainy: bool):
     print(f"Is it rainy: {is_rainy}")
 
 
-pl.run(_)
+pl.run(weather)
 ```
 
 ```
@@ -60,11 +60,11 @@ Of course if a default is provided then we don't need to explicitly pass it.
 import platitudes as pl
 
 
-def _(is_rainy: bool = False):
+def weather(is_rainy: bool = False):
     print(f"Is it rainy: {is_rainy}")
 
 
-pl.run(_)
+pl.run(weather)
 ```
 
 ```
@@ -96,14 +96,14 @@ import platitudes as pl
 
 
 # is_rainy should nominally behave as positional but bools are special
-def _(cloud_cover: float, is_rainy: bool, humidity: float, pressure: float = 1.0):
+def weather(cloud_cover: float, is_rainy: bool, humidity: float, pressure: float = 1.0):
     print(f"The cloud cover is: {cloud_cover}%")
     print(f"Is it rainy: {is_rainy}")
     print(f"The humidity is: {humidity}%")
     print(f"The pressure is {pressure} atm")
 
 
-pl.run(_)
+pl.run(weather)
 ```
 
 And all the following work despite `is_rainy` being the second argument to the
