@@ -1,3 +1,5 @@
+"""End to end tests for the CLI."""
+
 import os
 from datetime import datetime
 from enum import Enum
@@ -70,6 +72,13 @@ def test_bool():
         assert is_rainy
 
     app(["prog", "_", "--is-rainy"])
+
+    @app.command()
+    def _(is_rainy: bool = False):
+        assert isinstance(is_rainy, bool)
+        assert not is_rainy
+
+    app(["prog", "_"])
 
     def _(is_rainy: bool):
         assert isinstance(is_rainy, bool)
@@ -220,6 +229,7 @@ def test_datetime_envvar_no_default():
 
 
 def test_path_that_exists():
+    """Test path existence functionality"""
     app = pl.Platitudes()
 
     @app.command()
