@@ -54,7 +54,16 @@ def _create_parser(
         )
 
         envvar = extra_annotations.envvar
-        default, optional_prefix = _get_default(param, envvar, action, param_name)
+        default, optional_prefix = _get_default(
+            param, envvar, action, param_name, type_
+        )
+
+        add_argument_kwargs = {}
+        if optional_prefix == "--":
+            if type_ is bool:
+                add_argument_kwargs["required"] = True
+            else:
+                add_argument_kwargs["required"] = False
 
         help = (  # noqa: A001
             "-"
@@ -62,14 +71,18 @@ def _create_parser(
             else extra_annotations.help
         )
 
+        # NOTE: We pass the arguments in a dict so that we don't need separate
+        # calls for positional and optional parameters
+        add_argument_kwargs["type"] = str
+        add_argument_kwargs["default"] = default
+        add_argument_kwargs["help"] = help
+        add_argument_kwargs["action"] = action
+        add_argument_kwargs["choices"] = choices
+
         cmd_parser.add_argument(
-            f"{optional_prefix}{param_name.replace('_', '-')}",
-            type=str,
-            default=default,
-            help=help,
-            action=action,
-            choices=choices,
+            f"{optional_prefix}{param_name.replace('_', '-')}", **add_argument_kwargs
         )
+
     return cmd_parser
 
 
@@ -140,12 +153,6 @@ def _handle_type_specific_behaviour(
     choices = None
 
     if type_ is bool:
-        if not _has_default_value(param):
-            e_ = (
-                "Boolean parameters must always supply a default."
-                "This wasn't provided for {param}"
-            )
-            raise ValueError(e_)
         action = argparse.BooleanOptionalAction
     elif issubclass(type_, Enum):
         choices = [str(e.value) for e in type_]
@@ -169,7 +176,9 @@ def _handle_type_specific_behaviour(
     return action, choices
 
 
-def _get_default(param, envvar: str | None, action, param_name: str) -> tuple[Any, str]:
+def _get_default(
+    param, envvar: str | None, action, param_name: str, type: Any
+) -> tuple[Any, str]:
     optional_prefix = ""
     default = None
     if _has_default_value(param):
@@ -192,10 +201,13 @@ def _get_default(param, envvar: str | None, action, param_name: str) -> tuple[An
                 )
             except KeyError:
                 pass
-    else:
-        if envvar is not None:
-            e_ = "Envvars are not supported for arguments without a default."
-            raise ValueError(e_)
+    elif envvar is not None:
+        e_ = "Envvars are not supported for arguments without a default."
+        raise ValueError(e_)
+
+    if type is bool:
+        optional_prefix = "--"
+
     return default, optional_prefix
 
 

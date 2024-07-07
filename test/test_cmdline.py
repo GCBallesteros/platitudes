@@ -71,17 +71,30 @@ def test_bool():
 
     app(["prog", "_", "--is-rainy"])
 
-    with pytest.raises(ValueError):
+    def _(is_rainy: bool):
+        assert isinstance(is_rainy, bool)
+        assert is_rainy
+
+    pl.run(_, ["prog", "--is-rainy"])
+
+    def _(is_rainy: bool):
+        assert isinstance(is_rainy, bool)
+        assert not is_rainy
+
+    pl.run(_, ["prog", "--no-is-rainy"])
+
+    with pytest.raises(SystemExit):
 
         @app.command()
         def __(is_rainy: bool):
             assert isinstance(is_rainy, bool)
             assert not is_rainy
 
-        app(["prog", "__"])
+        pl.run(__, ["prog"])
 
 
 def test_uuid():
+    """Test UUID functionality"""
     app = pl.Platitudes()
 
     @app.command()
@@ -286,6 +299,6 @@ def test_maybe_parameters():
     pl.run(_, ["prog"])
 
     def _(n_days: int | None = 3):
-        assert n_days is 3
+        assert n_days == 3
 
     pl.run(_, ["prog"])
