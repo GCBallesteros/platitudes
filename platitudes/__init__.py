@@ -61,7 +61,10 @@ def _create_parser(
         add_argument_kwargs = {}
         if optional_prefix == "--":
             if type_ is bool:
-                add_argument_kwargs["required"] = True
+                if default is not None:
+                    add_argument_kwargs["required"] = False
+                else:
+                    add_argument_kwargs["required"] = True
             else:
                 add_argument_kwargs["required"] = False
 
