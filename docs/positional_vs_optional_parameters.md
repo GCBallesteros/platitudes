@@ -36,6 +36,12 @@ positional ones. The name for the optional parameters will always change
 underscores, `_` for `-` dashes.
 
 
+!!! note
+
+    Platitudes uses argparse under the hood which means that you can use all the
+    tricks that work there. For example not spelling out optional parameters
+    in full and just providing a unique prefix.
+
 ## `typing.Optional` parameters
 
 A.K.A. `x | None` or `typing.Union[x, None]` are treated differently and are also the
@@ -73,4 +79,5 @@ pl.run(my_clie)
 Writing a CLI where all parameters are a union with `None` as in the examples
 above enables a particularly useful idiom where we can use a configuration file
 to set the actual default values or override them by specifying them on the
-command line. Check out the [Funky Idioms](funky_idioms.py) sections to see how it's done.
+command line. Check out the [Funky Idioms](funky_idioms.py) sections to see how
+it's done.
