@@ -16,6 +16,7 @@ nav:
   - 'Home': index.md
   - 'Extended Example': extended_example.md
   - Positional Vs Optional Params:  positional_vs_optional_parameters.md
+  - 'Environment Variables': envvars.md
   - Supported Types:
     - str: types/str.md
     - numbers: types/numbers.md
