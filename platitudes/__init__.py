@@ -180,7 +180,7 @@ def _handle_type_specific_behaviour(
 
 
 def _get_default(
-    param, envvar: str | None, action, param_name: str, type: Any
+    param, envvar: str | None, action, param_name: str, type_: Any
 ) -> tuple[Any, str]:
     optional_prefix = ""
     default = None
@@ -208,10 +208,53 @@ def _get_default(
         e_ = "Envvars are not supported for arguments without a default."
         raise ValueError(e_)
 
-    if type is bool:
+    if type_ is bool:
         optional_prefix = "--"
 
     return default, optional_prefix
+
+
+def _merge_magic_config_with_argv(
+    magic_config_name: str | None, args_: argparse.Namespace
+) -> dict[str, Any]:
+    import json
+
+    cmdline_args = {k.replace("-", "_"): v for k, v in vars(args_).items()}
+
+    if magic_config_name is not None:
+        config_attr_name = magic_config_name.replace("-", "_")
+        config_attr = getattr(args_, config_attr_name)
+
+        if config_attr is not None:
+            magic_config_path = Path(config_attr)
+            with magic_config_path.open("r") as fh:
+                magic_config = json.load(fh)
+
+            # Remove config as it is special. All the remaining ones
+            # are required by the function
+            del cmdline_args[config_attr_name]
+            config = magic_config | {
+                arg: val for arg, val in cmdline_args.items() if val is not None
+            }
+
+            missing_params = []
+            args = [arg for arg in cmdline_args]
+            for arg in args:
+                if arg not in config:
+                    missing_params.append(arg)
+
+            if len(missing_params) > 0:
+                e_ = (
+                    "The following mandatory config params have not been"
+                    f" passed: {missing_params}"
+                )
+                raise ValueError(e_)
+        else:
+            config = cmdline_args
+    else:
+        config = cmdline_args
+
+    return config
 
 
 class Platitudes:
@@ -233,6 +276,7 @@ class Platitudes:
         self._registered_commands: dict[str, Callable] = {}
         self._parser = argparse.ArgumentParser(description=description)
         self._subparsers = self._parser.add_subparsers()
+        self._with_magic_config: str | None = None
 
     def __call__(self, arguments: list[str] | None = None) -> None:
         """Runs the CLI program.
@@ -270,14 +314,16 @@ class Platitudes:
             print(self._parser.format_help())
             sys.exit(1)
 
+        config = _merge_magic_config_with_argv(self._with_magic_config, args_)
+
         try:
             # NOTE: argparse insists on replacing _ with - for positional arguments
             # so we need to undo it
-            main_command(**{k.replace("-", "_"): v for k, v in vars(args_).items()})
+            main_command(**config)
         except Exit:
             sys.exit(0)
 
-    def command(self) -> Callable:
+    def command(self, config_file: str | None = None) -> Callable:
         """Add a function to the app.
 
         The function will be accessible from the CLI using the original's
@@ -313,6 +359,10 @@ class Platitudes:
             cmd_parser = _create_parser(function, cmd_parser)
 
             self._registered_commands[function.__name__] = function
+
+            if config_file is not None:
+                cmd_parser.add_argument(f"--{config_file}", default=None, type=Path)
+                self._with_magic_config = config_file
 
             return function
 
