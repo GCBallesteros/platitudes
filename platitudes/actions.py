@@ -11,19 +11,26 @@ import argparse
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 from uuid import UUID
 
 from .errors import PlatitudeError
 
 
+class PlatitudesAction(argparse.Action):  # noqa: D101
+    @staticmethod
+    def process(val, dest) -> Any:  # noqa: D102
+        raise NotImplementedError
+
+
 def make_datetime_action(formats: list[str]):
     """Produces a class responsible for parsing datetimes."""
 
-    class _DatetimeAction(argparse.Action):
+    class _DatetimeAction(PlatitudesAction):
         @staticmethod
-        def process(datetime_str, dest):
-            if isinstance(datetime_str, datetime):
-                return datetime_str
+        def process(val, dest):
+            if isinstance(val, datetime):
+                return val
 
             def parse_datetime(datetime_: str) -> datetime:
                 for possible_format in formats:
@@ -37,11 +44,11 @@ def make_datetime_action(formats: list[str]):
 
                 e_ = (
                     f"argument {dest}: invalid datetime format supplied:"
-                    f" '{datetime_str}'\n Only the following are supported: {formats}"
+                    f" '{val}'\n Only the following are supported: {formats}"
                 )
                 raise PlatitudeError(e_)
 
-            out = parse_datetime(datetime_str)
+            out = parse_datetime(val)
             return out
 
         def __call__(
@@ -56,11 +63,11 @@ def make_datetime_action(formats: list[str]):
 def make_enum_action(enum_):
     """Produces a class responsible for parsing enums."""
 
-    class _EnumAction(argparse.Action):
+    class _EnumAction(PlatitudesAction):
         @staticmethod
-        def process(enum_str, dest):
-            if isinstance(enum_str, enum_):
-                return enum_str
+        def process(val, dest):
+            if isinstance(val, enum_):
+                return val
 
             def find_enum_field(value):
                 for member in enum_:
@@ -69,7 +76,7 @@ def make_enum_action(enum_):
 
                 PlatitudeError("Enum must have at least one choice")
 
-            out = find_enum_field(enum_str)
+            out = find_enum_field(val)
             return out
 
         def __call__(self, __parser__, namespace, enum_str, option_string=None) -> None:
@@ -79,13 +86,13 @@ def make_enum_action(enum_):
     return _EnumAction
 
 
-class _FloatAction(argparse.Action):
+class _FloatAction(PlatitudesAction):
     @staticmethod
-    def process(float_str, dest):
+    def process(val, dest):
         try:
-            out = float(float_str)
+            out = float(val)
         except ValueError:
-            e_ = f"argument {dest}: invalid float value: '{float_str}'"
+            e_ = f"argument {dest}: invalid float value: '{val}'"
             raise PlatitudeError(e_)
         return out
 
@@ -94,13 +101,13 @@ class _FloatAction(argparse.Action):
         setattr(namespace, self.dest, out)
 
 
-class _IntAction(argparse.Action):
+class _IntAction(PlatitudesAction):
     @staticmethod
-    def process(int_str, dest):
+    def process(val, dest):
         try:
-            out = int(int_str)
+            out = int(val)
         except ValueError:
-            e_ = f"argument {dest}: invalid int value: '{int_str}'"
+            e_ = f"argument {dest}: invalid int value: '{val}'"
             raise PlatitudeError(e_)
         return out
 
@@ -109,15 +116,15 @@ class _IntAction(argparse.Action):
         setattr(namespace, self.dest, out)
 
 
-class _UUIDAction(argparse.Action):
+class _UUIDAction(PlatitudesAction):
     @staticmethod
-    def process(uuid_str, dest):
-        if isinstance(uuid_str, UUID):
-            return uuid_str
+    def process(val, dest):
+        if isinstance(val, UUID):
+            return val
         try:
-            out = UUID(uuid_str)
+            out = UUID(val)
         except ValueError:
-            e_ = f"argument {dest}: invalid uuid value: '{uuid_str}'"
+            e_ = f"argument {dest}: invalid uuid value: '{val}'"
             raise PlatitudeError(e_)
         return out
 
@@ -127,10 +134,10 @@ class _UUIDAction(argparse.Action):
         setattr(namespace, self.dest, out)
 
 
-class _StrAction(argparse.Action):
+class _StrAction(PlatitudesAction):
     @staticmethod
-    def process(str_, dest):
-        return str_
+    def process(val, dest):
+        return val
 
     def __call__(self, __parser__, namespace, int_str, option_string=None) -> None:
         out = self.process(int_str, self.dest)
@@ -146,13 +153,13 @@ def make_path_action(
     writable: bool = False,
     readable: bool = False,
     resolve_path: bool = False,
-) -> type[argparse.Action]:
+) -> type[PlatitudesAction]:
     """Produces a class responsible for parsing paths."""
 
-    class _PathAction(argparse.Action):
+    class _PathAction(PlatitudesAction):
         @staticmethod
-        def process(path_str, dest):
-            path = Path(path_str)
+        def process(val, dest):
+            path = Path(val)
             resolved_path = path.resolve()
 
             if resolve_path:

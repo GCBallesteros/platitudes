@@ -18,6 +18,7 @@ from typing import Annotated, Any, Union, get_args, get_origin
 from uuid import UUID
 
 from .actions import (
+    PlatitudesAction,
     _FloatAction,
     _IntAction,
     _StrAction,
@@ -37,10 +38,10 @@ DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"
 
 def _create_parser(
     main: Callable, cmd_parser: argparse.ArgumentParser, config_file: str | None = None
-) -> tuple[argparse.ArgumentParser, dict[str, type[argparse.Action]]]:
+) -> tuple[argparse.ArgumentParser, dict[str, type[PlatitudesAction]]]:
     cmd_signature = inspect.signature(main)
 
-    argument_actions: dict[str, str | type[argparse.Action]] = {}
+    argument_actions: dict[str, type[PlatitudesAction]] = {}
     for param_name, param in cmd_signature.parameters.items():
         help = None  # noqa: A001
         envvar = None
@@ -165,10 +166,10 @@ def _handle_maybe(type_, param):
 
 def _handle_type_specific_behaviour(
     type_, extra_annotations
-) -> tuple[type[argparse.Action], list[Any] | None]:
+) -> tuple[type[PlatitudesAction], list[Any] | None]:
     choices = None
 
-    actions = {
+    actions: dict[type[Any], type[PlatitudesAction]] = {
         bool: argparse.BooleanOptionalAction,
         Path: extra_annotations._path_action,
         datetime: extra_annotations._datetime_action,
@@ -228,7 +229,7 @@ def _get_default(
 def _merge_magic_config_with_argv(
     magic_config_name: str | None,
     args_: argparse.Namespace,
-    argument_actions: dict[str, type[argparse.Action]],
+    argument_actions: dict[str, type[PlatitudesAction]],
 ) -> dict[str, Any]:
     import json
 
@@ -294,7 +295,7 @@ class Platitudes:
         self._registered_commands: dict[str, Callable] = {}
         self._parser = argparse.ArgumentParser(description=description)
         self._subparsers = self._parser.add_subparsers()
-        self._command_actions: dict[str, dict[str, type[argparse.Action]]] = {}
+        self._command_actions: dict[str, dict[str, type[PlatitudesAction]]] = {}
         self._with_magic_config: str | None = None
 
     def __call__(self, arguments: list[str] | None = None) -> None:
