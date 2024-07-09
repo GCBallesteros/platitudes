@@ -37,7 +37,7 @@ DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"
 
 def _create_parser(
     main: Callable, cmd_parser: argparse.ArgumentParser, config_file: str | None = None
-) -> tuple[argparse.ArgumentParser, dict[str, type[argparse.Action] | str]]:
+) -> tuple[argparse.ArgumentParser, dict[str, type[argparse.Action]]]:
     cmd_signature = inspect.signature(main)
 
     argument_actions: dict[str, str | type[argparse.Action]] = {}
@@ -165,30 +165,27 @@ def _handle_maybe(type_, param):
 
 def _handle_type_specific_behaviour(
     type_, extra_annotations
-) -> tuple[str | type[argparse.Action], list[Any] | None]:
-    action: str | type[argparse.Action] = "store"
+) -> tuple[type[argparse.Action], list[Any] | None]:
     choices = None
 
-    if type_ is bool:
-        action = argparse.BooleanOptionalAction
-    elif issubclass(type_, Enum):
+    actions = {
+        bool: argparse.BooleanOptionalAction,
+        Path: extra_annotations._path_action,
+        datetime: extra_annotations._datetime_action,
+        int: _IntAction,
+        float: _FloatAction,
+        str: _StrAction,
+        UUID: _UUIDAction,
+    }
+
+    if issubclass(type_, Enum):
         choices = [str(e.value) for e in type_]
         try:
             action = make_enum_action(type_)
         except IndexError:
             PlatitudeError("Enum must have at least one choice")
-    elif type_ is Path:
-        action = extra_annotations._path_action
-    elif type_ is datetime:
-        action = extra_annotations._datetime_action
-    elif type_ is int:
-        action = _IntAction
-    elif type_ is float:
-        action = _FloatAction
-    elif type_ is str:
-        action = _StrAction
-    elif type_ is UUID:
-        action = _UUIDAction
+    elif type_ in actions:
+        action = actions[type_]
     else:
         e_ = "Unsupported type"
         raise PlatitudeError(e_)
@@ -234,7 +231,7 @@ def _get_default(
 def _merge_magic_config_with_argv(
     magic_config_name: str | None,
     args_: argparse.Namespace,
-    argument_actions: dict[str, str | type[argparse.Action]],
+    argument_actions: dict[str, type[argparse.Action]],
 ) -> dict[str, Any]:
     import json
 
@@ -300,7 +297,7 @@ class Platitudes:
         self._registered_commands: dict[str, Callable] = {}
         self._parser = argparse.ArgumentParser(description=description)
         self._subparsers = self._parser.add_subparsers()
-        self._command_actions: dict[str, dict[str, str | type[argparse.Action]]] = {}
+        self._command_actions: dict[str, dict[str, type[argparse.Action]]] = {}
         self._with_magic_config: str | None = None
 
     def __call__(self, arguments: list[str] | None = None) -> None:
