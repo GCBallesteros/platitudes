@@ -31,13 +31,12 @@ from .errors import PlatitudeError
 DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
 # TODO: Shown default valid datetime formats
-# TODO: Finish first implementation of merger
-#   - Remove the need for specifying the None. How? Just add them implicitly, the
-#     rest of the logic remains the same. Make them all optional
+# TODO: Refactor
+# TODO: Finish documentation for magic config
 
 
 def _create_parser(
-    main: Callable, cmd_parser: argparse.ArgumentParser
+    main: Callable, cmd_parser: argparse.ArgumentParser, with_magic_config: bool = False
 ) -> tuple[argparse.ArgumentParser, dict[str, type[argparse.Action] | str]]:
     cmd_signature = inspect.signature(main)
 
@@ -84,11 +83,14 @@ def _create_parser(
         # NOTE: We pass the arguments in a dict so that we don't need separate
         # calls for positional and optional parameters
         add_argument_kwargs["type"] = str
-        add_argument_kwargs["default"] = default
+        add_argument_kwargs["default"] = (
+            default if (not with_magic_config or default is not None) else None
+        )
         add_argument_kwargs["help"] = help
         add_argument_kwargs["action"] = action
         add_argument_kwargs["choices"] = choices
 
+        optional_prefix = optional_prefix if not with_magic_config else "--"
         cmd_parser.add_argument(
             f"{optional_prefix}{param_name.replace('_', '-')}", **add_argument_kwargs
         )
@@ -376,7 +378,11 @@ class Platitudes:
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                 description=inspect.getdoc(function),
             )
-            cmd_parser, argument_actions = _create_parser(function, cmd_parser)
+
+            with_magic_config = True if config_file is not None else False
+            cmd_parser, argument_actions = _create_parser(
+                function, cmd_parser, with_magic_config
+            )
 
             self._registered_commands[function.__name__] = function
             self._command_actions[function.__name__] = argument_actions
@@ -392,13 +398,20 @@ class Platitudes:
         return proc_command
 
 
-def run(main: Callable, arguments: list[str] | None = None) -> None:
+def run(
+    main: Callable, arguments: list[str] | None = None, config_file: str | None = None
+) -> None:
     """Create a CLI program out of a single function."""
     cmd_parser = argparse.ArgumentParser(
         description=inspect.getdoc(main),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    cmd_parser, _ = _create_parser(main, cmd_parser)
+    with_magic_config = True if config_file is not None else False
+    cmd_parser, command_actions = _create_parser(main, cmd_parser, with_magic_config)
+    if config_file is not None:
+        cmd_parser.add_argument(
+            f"--{config_file}", default=None, type=Path, required=True
+        )
 
     if arguments is None:
         arguments = sys.argv
@@ -406,10 +419,10 @@ def run(main: Callable, arguments: list[str] | None = None) -> None:
         pass
 
     args_ = cmd_parser.parse_args(arguments[1:])
+
+    config = _merge_magic_config_with_argv(config_file, args_, command_actions)
     try:
-        # NOTE: argparse insists on replacing _ with - for positional arguments
-        # so we need to undo it
-        main(**{k.replace("-", "_"): v for k, v in vars(args_).items()})
+        main(**config)
     except Exit:
         sys.exit(0)
 

@@ -413,17 +413,13 @@ def test_magic_config_other_types():
 
     @app.command(config_file="config-file")
     def lab_runner(
-        a_int: int | None = None,
-        a_str: str | None = None,
-        a_path: Path | None = None,
-        a_uuid: UUID | None = None,
-        a_datetime: datetime | None = None,
+        a_int: int, a_str: str, a_path: Path, a_uuid: UUID, a_datetime: datetime
     ):
         assert a_int == 3
         assert a_str == "qwerty"
         assert a_path == PosixPath("./test.py")
         assert a_uuid == UUID("d48edaa6-871a-4082-a196-4daab372d4a1")
-        assert a_datetime == datetime(2020,2,2)
+        assert a_datetime == datetime(2020, 2, 2)
 
     with NamedTemporaryFile("w") as fh:
         config = {
@@ -437,3 +433,68 @@ def test_magic_config_other_types():
         fh.seek(0)
 
         app(["prog", "lab_runner", "--config-file", fh.name])
+
+
+def test_magic_config_priority():
+    app = pl.Platitudes()
+
+    os.environ["e_int"] = "55"
+
+    @app.command(config_file="config-file")
+    def lab_runner(
+        a_int: int,
+        b_int: int,
+        c_int: int = 3,
+        d_int: int = 4,
+        e_int: Annotated[int, pl.Argument(envvar="e_int")] = 5,
+    ):
+        assert a_int == 1
+        assert b_int == 2
+        assert c_int == 3
+        assert d_int == 4
+        assert e_int == 55
+
+    with NamedTemporaryFile("w") as fh:
+        config = {
+            "a_int": 1,
+            "b_int": 22,
+            "c_int": 33,
+            "e_int": 555,
+        }
+        fh.write(json.dumps(config))
+        fh.seek(0)
+
+        app(["prog", "lab_runner", "--config-file", fh.name, "--b-int", "2"])
+
+
+def test_magic_config_priority_pl_run():
+    os.environ["e_int"] = "55"
+
+    def lab_runner(
+        a_int: int,
+        b_int: int,
+        c_int: int = 3,
+        d_int: int = 4,
+        e_int: Annotated[int, pl.Argument(envvar="e_int")] = 5,
+    ):
+        assert a_int == 1
+        assert b_int == 2
+        assert c_int == 3
+        assert d_int == 4
+        assert e_int == 55
+
+    with NamedTemporaryFile("w") as fh:
+        config = {
+            "a_int": 1,
+            "b_int": 22,
+            "c_int": 33,
+            "e_int": 555,
+        }
+        fh.write(json.dumps(config))
+        fh.seek(0)
+
+        pl.run(
+            lab_runner,
+            ["prog", "--config-file", fh.name, "--b-int", "2"],
+            config_file="config-file",
+        )
