@@ -36,7 +36,7 @@ DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"
 
 
 def _create_parser(
-    main: Callable, cmd_parser: argparse.ArgumentParser, with_magic_config: bool = False
+    main: Callable, cmd_parser: argparse.ArgumentParser, config_file: str | None = None
 ) -> tuple[argparse.ArgumentParser, dict[str, type[argparse.Action] | str]]:
     cmd_signature = inspect.signature(main)
 
@@ -84,15 +84,20 @@ def _create_parser(
         # calls for positional and optional parameters
         add_argument_kwargs["type"] = str
         add_argument_kwargs["default"] = (
-            default if (not with_magic_config or default is not None) else None
+            default if (not config_file or default is not None) else None
         )
         add_argument_kwargs["help"] = help
         add_argument_kwargs["action"] = action
         add_argument_kwargs["choices"] = choices
 
-        optional_prefix = optional_prefix if not with_magic_config else "--"
+        optional_prefix = optional_prefix if not config_file else "--"
         cmd_parser.add_argument(
             f"{optional_prefix}{param_name.replace('_', '-')}", **add_argument_kwargs
+        )
+
+    if config_file is not None:
+        cmd_parser.add_argument(
+            f"--{config_file}", default=None, type=Path, required=True
         )
 
     return cmd_parser, argument_actions
@@ -379,19 +384,15 @@ class Platitudes:
                 description=inspect.getdoc(function),
             )
 
-            with_magic_config = True if config_file is not None else False
             cmd_parser, argument_actions = _create_parser(
-                function, cmd_parser, with_magic_config
+                function, cmd_parser, config_file
             )
+
+            if config_file is not None:
+                self._with_magic_config = config_file
 
             self._registered_commands[function.__name__] = function
             self._command_actions[function.__name__] = argument_actions
-
-            if config_file is not None:
-                cmd_parser.add_argument(
-                    f"--{config_file}", default=None, type=Path, required=True
-                )
-                self._with_magic_config = config_file
 
             return function
 
@@ -406,12 +407,7 @@ def run(
         description=inspect.getdoc(main),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    with_magic_config = True if config_file is not None else False
-    cmd_parser, command_actions = _create_parser(main, cmd_parser, with_magic_config)
-    if config_file is not None:
-        cmd_parser.add_argument(
-            f"--{config_file}", default=None, type=Path, required=True
-        )
+    cmd_parser, command_actions = _create_parser(main, cmd_parser, config_file)
 
     if arguments is None:
         arguments = sys.argv
