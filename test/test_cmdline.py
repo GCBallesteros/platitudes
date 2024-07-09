@@ -1,9 +1,11 @@
 """End to end tests for the CLI."""
 
+import json
 import os
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PosixPath
+from tempfile import NamedTemporaryFile
 from typing import Annotated
 from uuid import UUID
 
@@ -312,3 +314,126 @@ def test_maybe_parameters():
         assert n_days == 3
 
     pl.run(_, ["prog"])
+
+
+def test_magic_config_app_all_in_json():
+    app = pl.Platitudes()
+
+    @app.command(config_file="config-file")
+    def lab_runner(
+        n_points: int | None = None,
+        experiment_name: str | None = None,
+    ):
+        assert n_points == 3
+        assert experiment_name == "qwerty"
+
+    with NamedTemporaryFile("w") as fh:
+        config = {"n_points": 3, "experiment_name": "qwerty"}
+        fh.write(json.dumps(config))
+        fh.seek(0)
+        app(["prog", "lab_runner", "--config-file", fh.name])
+
+
+def test_magic_config_app_one_missing():
+    app = pl.Platitudes()
+
+    @app.command(config_file="config-file")
+    def lab_runner(
+        n_points: int | None = None,
+        experiment_name: str | None = None,
+    ):
+        assert n_points == 3
+        assert experiment_name == "qwerty"
+
+    with NamedTemporaryFile("w") as fh:
+        config = {"n_points": 3}
+        fh.write(json.dumps(config))
+        fh.seek(0)
+        app(
+            [
+                "prog",
+                "lab_runner",
+                "--config-file",
+                fh.name,
+                "--experiment-name",
+                "qwerty",
+            ]
+        )
+
+
+def test_magic_config_not_enough():
+    app = pl.Platitudes()
+
+    @app.command(config_file="config-file")
+    def lab_runner(
+        n_points: int | None = None,
+        experiment_name: str | None = None,
+    ):
+        assert n_points == 3
+        assert experiment_name == "qwerty"
+
+    with NamedTemporaryFile("w") as fh:
+        config = {"n_points": 3}
+        fh.write(json.dumps(config))
+        fh.seek(0)
+        with pytest.raises(ValueError):
+            app(["prog", "lab_runner", "--config-file", fh.name])
+
+
+def test_magic_config_override():
+    app = pl.Platitudes()
+
+    @app.command(config_file="config-file")
+    def lab_runner(
+        n_points: int | None = None,
+        experiment_name: str | None = None,
+    ):
+        assert n_points == 3
+        assert experiment_name == "asdf"
+
+    with NamedTemporaryFile("w") as fh:
+        config = {"n_points": 3, "experiment_name": "qwerty"}
+        fh.write(json.dumps(config))
+        fh.seek(0)
+
+        app(
+            [
+                "prog",
+                "lab_runner",
+                "--config-file",
+                fh.name,
+                "--experiment-name",
+                "asdf",
+            ]
+        )
+
+
+def test_magic_config_other_types():
+    app = pl.Platitudes()
+
+    @app.command(config_file="config-file")
+    def lab_runner(
+        a_int: int | None = None,
+        a_str: str | None = None,
+        a_path: Path | None = None,
+        a_uuid: UUID | None = None,
+        a_datetime: datetime | None = None,
+    ):
+        assert a_int == 3
+        assert a_str == "qwerty"
+        assert a_path == PosixPath("./test.py")
+        assert a_uuid == UUID("d48edaa6-871a-4082-a196-4daab372d4a1")
+        assert a_datetime == datetime(2020,2,2)
+
+    with NamedTemporaryFile("w") as fh:
+        config = {
+            "a_int": 3,
+            "a_str": "qwerty",
+            "a_path": "./test.py",
+            "a_uuid": "d48edaa6-871a-4082-a196-4daab372d4a1",
+            "a_datetime": "2020-02-02",
+        }
+        fh.write(json.dumps(config))
+        fh.seek(0)
+
+        app(["prog", "lab_runner", "--config-file", fh.name])

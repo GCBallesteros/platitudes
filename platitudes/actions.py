@@ -142,7 +142,7 @@ def make_path_action(
     file_okay: bool = True,
     dir_okay: bool = True,
     writable: bool = False,
-    readable: bool = True,
+    readable: bool = False,
     resolve_path: bool = False,
 ) -> type[argparse.Action]:
     """Produces a class responsible for parsing paths."""

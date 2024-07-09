@@ -30,15 +30,18 @@ from .errors import PlatitudeError
 
 DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
-# TODO: Better and more docs
 # TODO: Shown default valid datetime formats
+# TODO: Finish first implementation of merger
+#   - Remove the need for specifying the None. How? Just add them implicitly, the
+#     rest of the logic remains the same. Make them all optional
 
 
 def _create_parser(
     main: Callable, cmd_parser: argparse.ArgumentParser
-) -> argparse.ArgumentParser:
+) -> tuple[argparse.ArgumentParser, dict[str, type[argparse.Action] | str]]:
     cmd_signature = inspect.signature(main)
 
+    argument_actions: dict[str, str | type[argparse.Action]] = {}
     for param_name, param in cmd_signature.parameters.items():
         help = None  # noqa: A001
         envvar = None
@@ -52,6 +55,10 @@ def _create_parser(
         action, choices = _handle_type_specific_behaviour(
             _handle_maybe(type_, param), extra_annotations
         )
+
+        # In theory this can be extracted from the argument parser in practice
+        # it is just much more convenient to collect them here
+        argument_actions[param_name] = action
 
         envvar = extra_annotations.envvar
         default, optional_prefix = _get_default(
@@ -86,7 +93,7 @@ def _create_parser(
             f"{optional_prefix}{param_name.replace('_', '-')}", **add_argument_kwargs
         )
 
-    return cmd_parser
+    return cmd_parser, argument_actions
 
 
 def _has_default_value(param: inspect.Parameter):
@@ -175,6 +182,9 @@ def _handle_type_specific_behaviour(
         action = _StrAction
     elif type_ is UUID:
         action = _UUIDAction
+    else:
+        e_ = "Unsupported type"
+        raise PlatitudeError(e_)
 
     return action, choices
 
@@ -215,7 +225,9 @@ def _get_default(
 
 
 def _merge_magic_config_with_argv(
-    magic_config_name: str | None, args_: argparse.Namespace
+    magic_config_name: str | None,
+    args_: argparse.Namespace,
+    argument_actions: dict[str, str | type[argparse.Action]],
 ) -> dict[str, Any]:
     import json
 
@@ -229,6 +241,11 @@ def _merge_magic_config_with_argv(
             magic_config_path = Path(config_attr)
             with magic_config_path.open("r") as fh:
                 magic_config = json.load(fh)
+
+            for param, action in argument_actions.items():
+                if param in magic_config:
+                    parsed_value = action.process(magic_config[param], "")
+                    magic_config[param] = parsed_value
 
             # Remove config as it is special. All the remaining ones
             # are required by the function
@@ -276,6 +293,7 @@ class Platitudes:
         self._registered_commands: dict[str, Callable] = {}
         self._parser = argparse.ArgumentParser(description=description)
         self._subparsers = self._parser.add_subparsers()
+        self._command_actions: dict[str, dict[str, str | type[argparse.Action]]] = {}
         self._with_magic_config: str | None = None
 
     def __call__(self, arguments: list[str] | None = None) -> None:
@@ -314,7 +332,9 @@ class Platitudes:
             print(self._parser.format_help())
             sys.exit(1)
 
-        config = _merge_magic_config_with_argv(self._with_magic_config, args_)
+        config = _merge_magic_config_with_argv(
+            self._with_magic_config, args_, self._command_actions[arguments[1]]
+        )
 
         try:
             # NOTE: argparse insists on replacing _ with - for positional arguments
@@ -356,12 +376,15 @@ class Platitudes:
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                 description=inspect.getdoc(function),
             )
-            cmd_parser = _create_parser(function, cmd_parser)
+            cmd_parser, argument_actions = _create_parser(function, cmd_parser)
 
             self._registered_commands[function.__name__] = function
+            self._command_actions[function.__name__] = argument_actions
 
             if config_file is not None:
-                cmd_parser.add_argument(f"--{config_file}", default=None, type=Path)
+                cmd_parser.add_argument(
+                    f"--{config_file}", default=None, type=Path, required=True
+                )
                 self._with_magic_config = config_file
 
             return function
@@ -375,7 +398,7 @@ def run(main: Callable, arguments: list[str] | None = None) -> None:
         description=inspect.getdoc(main),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    cmd_parser = _create_parser(main, cmd_parser)
+    cmd_parser, _ = _create_parser(main, cmd_parser)
 
     if arguments is None:
         arguments = sys.argv
@@ -403,7 +426,7 @@ class Argument:
         file_okay: bool = True,
         dir_okay: bool = True,
         writable: bool = False,
-        readable: bool = True,
+        readable: bool = False,
         resolve_path: bool = False,
         # DateTime
         formats: list[str] | None = None,

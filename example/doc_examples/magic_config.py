@@ -1,8 +1,6 @@
-from typing import Annotated
+import platitudes as pl
 
-from platitudes import Argument, Platitudes
-
-app = Platitudes()
+app = pl.Platitudes()
 
 
 @app.command(config_file="config-file")
