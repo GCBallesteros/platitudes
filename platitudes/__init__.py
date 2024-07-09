@@ -180,10 +180,7 @@ def _handle_type_specific_behaviour(
 
     if issubclass(type_, Enum):
         choices = [str(e.value) for e in type_]
-        try:
-            action = make_enum_action(type_)
-        except IndexError:
-            PlatitudeError("Enum must have at least one choice")
+        action = make_enum_action(type_)
     elif type_ in actions:
         action = actions[type_]
     else:

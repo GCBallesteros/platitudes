@@ -67,6 +67,8 @@ def make_enum_action(enum_):
                     if str(member.value) == value:
                         return member
 
+                PlatitudeError("Enum must have at least one choice")
+
             out = find_enum_field(enum_str)
             return out
 
