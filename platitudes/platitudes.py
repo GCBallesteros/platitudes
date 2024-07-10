@@ -16,10 +16,10 @@ from uuid import UUID
 
 from .actions import (
     PlatitudesAction,
-    _FloatAction,
-    _IntAction,
-    _StrAction,
-    _UUIDAction,
+    FloatAction,
+    IntAction,
+    StrAction,
+    UUIDAction,
     make_enum_action,
 )
 from .argument import Argument
@@ -169,10 +169,10 @@ def _handle_type_specific_behaviour(
         bool: cast(type[PlatitudesAction], argparse.BooleanOptionalAction),  # not true
         Path: extra_annotations._path_action,
         datetime: extra_annotations._datetime_action,
-        int: _IntAction,
-        float: _FloatAction,
-        str: _StrAction,
-        UUID: _UUIDAction,
+        int: IntAction,
+        float: FloatAction,
+        str: StrAction,
+        UUID: UUIDAction,
     }
 
     if issubclass(type_, Enum):

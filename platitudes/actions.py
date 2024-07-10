@@ -22,6 +22,10 @@ class PlatitudesAction(argparse.Action):  # noqa: D101
     def process(val, dest) -> Any:  # noqa: D102
         raise NotImplementedError
 
+    def __call__(self, __parser__, namespace, datetime_str, option_string=None) -> None:
+        out = self.process(datetime_str, self.dest)
+        setattr(namespace, self.dest, out)
+
 
 def make_datetime_action(formats: list[str]):
     """Produces a class responsible for parsing datetimes."""
@@ -51,12 +55,6 @@ def make_datetime_action(formats: list[str]):
             out = parse_datetime(val)
             return out
 
-        def __call__(
-            self, __parser__, namespace, datetime_str, option_string=None
-        ) -> None:
-            out = self.process(datetime_str, self.dest)
-            setattr(namespace, self.dest, out)
-
     return _DatetimeAction
 
 
@@ -79,16 +77,15 @@ def make_enum_action(enum_):
             out = find_enum_field(val)
             return out
 
-        def __call__(self, __parser__, namespace, enum_str, option_string=None) -> None:
-            out = self.process(enum_str, self.dest)
-            setattr(namespace, self.dest, out)
-
     return _EnumAction
 
 
-class _FloatAction(PlatitudesAction):
+class FloatAction(PlatitudesAction):
+    """Action for parsing floats"""
+
     @staticmethod
     def process(val, dest):
+        """Process floats"""
         try:
             out = float(val)
         except ValueError:
@@ -96,14 +93,13 @@ class _FloatAction(PlatitudesAction):
             raise PlatitudesError(e_)
         return out
 
-    def __call__(self, __parser__, namespace, float_str, option_string=None) -> None:
-        out = self.process(float_str, self.dest)
-        setattr(namespace, self.dest, out)
 
+class IntAction(PlatitudesAction):
+    """Action for parsing int"""
 
-class _IntAction(PlatitudesAction):
     @staticmethod
     def process(val, dest):
+        """Process int"""
         try:
             out = int(val)
         except ValueError:
@@ -111,12 +107,8 @@ class _IntAction(PlatitudesAction):
             raise PlatitudesError(e_)
         return out
 
-    def __call__(self, __parser__, namespace, int_str, option_string=None) -> None:
-        out = self.process(int_str, self.dest)
-        setattr(namespace, self.dest, out)
 
-
-class _UUIDAction(PlatitudesAction):
+class UUIDAction(PlatitudesAction):
     @staticmethod
     def process(val, dest):
         if isinstance(val, UUID):
@@ -128,22 +120,11 @@ class _UUIDAction(PlatitudesAction):
             raise PlatitudesError(e_)
         return out
 
-    def __call__(self, __parser__, namespace, uuid_str, option_string=None) -> None:
-        out = self.process(uuid_str, self.dest)
 
-        setattr(namespace, self.dest, out)
-
-
-class _StrAction(PlatitudesAction):
+class StrAction(PlatitudesAction):
     @staticmethod
     def process(val, dest):
         return val
-
-    def __call__(self, __parser__, namespace, int_str, option_string=None) -> None:
-        out = self.process(int_str, self.dest)
-        setattr(namespace, self.dest, out)
-
-    pass
 
 
 def make_path_action(
@@ -185,10 +166,5 @@ def make_path_action(
                 e_ = f"Invalid value for '{dest}': Path {path} is not writable."
                 raise PlatitudesError(e_)
             return path
-
-        def __call__(self, __parser__, namespace, path_str, option_string=None) -> None:
-            path = self.process(path_str, self.dest)
-
-            setattr(namespace, self.dest, path)
 
     return _PathAction
