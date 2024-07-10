@@ -399,7 +399,36 @@ class Platitudes:
 def run(
     main: Callable, arguments: list[str] | None = None, config_file: str | None = None
 ) -> None:
-    """Create a CLI program out of a single function."""
+    """Create a Platitudes CLI out of a single function.
+
+    Platitudes provides to ways to generate CLIs: `pl.Platitudes` and `pl.run`.
+    The latter, unlike a `pl.Platitudes`, doesn't allow to add subcommands to
+    the CLI ala `git add/fetch/...` however it's much simpler to use as it only
+    requires us to pass the function to `pl.run`.
+
+    Parameters
+    ----------
+    main
+        The function that will form the base for the new CLI
+    arguments
+        List of strings passed for the CLI parsing. Defaults to using
+        `sys.argv`.
+    config_file
+        Name of the additional optional parameter that may be injected to
+        provide default values via a json file. For more information on this
+        functionality consult [Config File Defaults](config_file_defaults.md)
+
+    Example
+    -------
+    ```python
+    import platitudes as pl
+
+    def hello_world(name: str = "World"):
+        print(f"Hello {name}!")
+
+    pl.run(hello_world)
+    ```
+    """
     cmd_parser = argparse.ArgumentParser(
         description=inspect.getdoc(main),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,

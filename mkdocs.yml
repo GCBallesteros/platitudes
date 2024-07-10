@@ -28,6 +28,7 @@ nav:
     - Enum/Choices: types/enum.md
   - API:
     - Platitudes: api/platitudes.md
+    - run: api/run.md
     - Argument: api/argument.md
     - Exit: api/exit.md
 
