@@ -221,7 +221,7 @@ def test_datetime_envvar_no_default():
     """Check datetimes"""
     app = pl.Platitudes()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(pl.PlatitudesError):
 
         @app.command()
         def _(birthday: Annotated[datetime, pl.Argument(envvar="TEST_DATE")]):
@@ -376,7 +376,7 @@ def test_magic_config_not_enough():
         config = {"n_points": 3}
         fh.write(json.dumps(config))
         fh.seek(0)
-        with pytest.raises(ValueError):
+        with pytest.raises(pl.PlatitudesError):
             app(["prog", "lab_runner", "--config-file", fh.name])
 
 
