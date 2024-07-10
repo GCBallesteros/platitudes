@@ -1,6 +1,6 @@
 """The most convenient zero dependency CLI builder"""
 
-__version__ = "1.1.3"
+__version__ = "2.0.0"
 
 from .argument import Argument
 from .platitudes import (
