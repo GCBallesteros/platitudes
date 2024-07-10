@@ -28,7 +28,6 @@ from .errors import PlatitudesError
 # TODO: Internal docstrings
 # TODO: Shown default valid datetime formats
 # TODO: Fix fake cast
-# TODO: Better use of platitude errors througout
 
 
 def _create_parser(
@@ -213,7 +212,7 @@ def _get_default(
                 pass
     elif envvar is not None:
         e_ = "Envvars are not supported for arguments without a default."
-        raise ValueError(e_)
+        raise PlatitudesError(e_)
 
     if type_ is bool:
         optional_prefix = "--"
@@ -262,7 +261,7 @@ def _merge_magic_config_with_argv(
                     "The following mandatory config params have not been"
                     f" passed: {missing_params}"
                 )
-                raise ValueError(e_)
+                raise PlatitudesError(e_)
         else:
             config = cmdline_args
     else:
