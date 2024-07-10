@@ -19,11 +19,12 @@ from .errors import PlatitudesError
 
 class PlatitudesAction(argparse.Action):  # noqa: D101
     @staticmethod
-    def process(val, dest) -> Any:  # noqa: D102
+    def process(val, _dest) -> Any:  # noqa: D102
         raise NotImplementedError
 
-    def __call__(self, __parser__, namespace, datetime_str, option_string=None) -> None:
-        out = self.process(datetime_str, self.dest)
+    def __call__(self, __parser__, namespace, val_str, option_string=None) -> None:
+        """Add parameter to the namespace"""
+        out = self.process(val_str, self.dest)
         setattr(namespace, self.dest, out)
 
 
@@ -109,8 +110,10 @@ class IntAction(PlatitudesAction):
 
 
 class UUIDAction(PlatitudesAction):
+    """Action for parsing UUID"""
     @staticmethod
     def process(val, dest):
+        """Process UUID"""
         if isinstance(val, UUID):
             return val
         try:
@@ -122,8 +125,10 @@ class UUIDAction(PlatitudesAction):
 
 
 class StrAction(PlatitudesAction):
+    """Action for parsing strings"""
     @staticmethod
     def process(val, dest):
+        "process string"
         return val
 
 
