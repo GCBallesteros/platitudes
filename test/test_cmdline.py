@@ -279,7 +279,7 @@ def test_default_no_annotation():
 def test_nonsense_default():
     """Default values without annotation are passed as is."""
 
-    with pytest.raises(pl.PlatitudeError):
+    with pytest.raises(pl.PlatitudesError):
 
         def _(age: int = "Wut?"):  # pyright: ignore
             print(age)

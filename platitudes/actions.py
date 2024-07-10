@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
-from .errors import PlatitudeError
+from .errors import PlatitudesError
 
 
 class PlatitudesAction(argparse.Action):  # noqa: D101
@@ -46,7 +46,7 @@ def make_datetime_action(formats: list[str]):
                     f"argument {dest}: invalid datetime format supplied:"
                     f" '{val}'\n Only the following are supported: {formats}"
                 )
-                raise PlatitudeError(e_)
+                raise PlatitudesError(e_)
 
             out = parse_datetime(val)
             return out
@@ -74,7 +74,7 @@ def make_enum_action(enum_):
                     if str(member.value) == value:
                         return member
 
-                PlatitudeError("Enum must have at least one choice")
+                PlatitudesError("Enum must have at least one choice")
 
             out = find_enum_field(val)
             return out
@@ -93,7 +93,7 @@ class _FloatAction(PlatitudesAction):
             out = float(val)
         except ValueError:
             e_ = f"argument {dest}: invalid float value: '{val}'"
-            raise PlatitudeError(e_)
+            raise PlatitudesError(e_)
         return out
 
     def __call__(self, __parser__, namespace, float_str, option_string=None) -> None:
@@ -108,7 +108,7 @@ class _IntAction(PlatitudesAction):
             out = int(val)
         except ValueError:
             e_ = f"argument {dest}: invalid int value: '{val}'"
-            raise PlatitudeError(e_)
+            raise PlatitudesError(e_)
         return out
 
     def __call__(self, __parser__, namespace, int_str, option_string=None) -> None:
@@ -125,7 +125,7 @@ class _UUIDAction(PlatitudesAction):
             out = UUID(val)
         except ValueError:
             e_ = f"argument {dest}: invalid uuid value: '{val}'"
-            raise PlatitudeError(e_)
+            raise PlatitudesError(e_)
         return out
 
     def __call__(self, __parser__, namespace, uuid_str, option_string=None) -> None:
@@ -167,23 +167,23 @@ def make_path_action(
 
             if exists and not resolved_path.exists():
                 e_ = f"Invalid value for '{dest}': Path {path} does not exist."
-                raise PlatitudeError(e_)
+                raise PlatitudesError(e_)
 
             if not file_okay and resolved_path.is_file():
                 e_ = f"Invalid value for '{dest}': File {path} is a file."
-                raise PlatitudeError(e_)
+                raise PlatitudesError(e_)
 
             if not dir_okay and resolved_path.is_dir():
                 e_ = f"Invalid value for '{dest}': File {path} is a directory."
-                raise PlatitudeError(e_)
+                raise PlatitudesError(e_)
 
             if readable and not os.access(path, os.R_OK):
                 e_ = f"Invalid value for '{dest}': Path {path} is not readable."
-                raise PlatitudeError(e_)
+                raise PlatitudesError(e_)
 
             if writable and not os.access(path, os.W_OK):
                 e_ = f"Invalid value for '{dest}': Path {path} is not writable."
-                raise PlatitudeError(e_)
+                raise PlatitudesError(e_)
             return path
 
         def __call__(self, __parser__, namespace, path_str, option_string=None) -> None:

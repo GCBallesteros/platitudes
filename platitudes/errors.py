@@ -1,6 +1,6 @@
 """Exceptions for the Platitudes package"""
 
-class PlatitudeError(Exception):
+class PlatitudesError(Exception):
     """Platitude specific errors.
 
     Most of the time raised when a passed parameter to the CLI fails to parse.

@@ -14,7 +14,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from types import UnionType
-from typing import Annotated, Any, Union, get_args, get_origin
+from typing import Annotated, Any, Union, cast, get_args, get_origin
 from uuid import UUID
 
 from .actions import (
@@ -27,13 +27,15 @@ from .actions import (
     make_enum_action,
     make_path_action,
 )
-from .errors import PlatitudeError
+from .errors import PlatitudesError
 
 DEFAULT_DATETIME_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
-# TODO: Shown default valid datetime formats
-# TODO: Refactor
 # TODO: Finish documentation for magic config
+# TODO: Refactor
+# TODO: Internal docstrings
+# TODO: Shown default valid datetime formats
+# TODO: Fix fake cast
 
 
 def _create_parser(
@@ -158,7 +160,7 @@ def _handle_maybe(type_, param):
                 "Potentially None params must provide a default. "
                 f"Missing from {param}"
             )
-            raise PlatitudeError(e_)
+            raise PlatitudesError(e_)
         else:
             type_ = _unwrap_maybe(type_)
     return type_
@@ -170,7 +172,7 @@ def _handle_type_specific_behaviour(
     choices = None
 
     actions: dict[type[Any], type[PlatitudesAction]] = {
-        bool: argparse.BooleanOptionalAction,
+        bool: cast(type[PlatitudesAction], argparse.BooleanOptionalAction),  # not true
         Path: extra_annotations._path_action,
         datetime: extra_annotations._datetime_action,
         int: _IntAction,
@@ -186,7 +188,7 @@ def _handle_type_specific_behaviour(
         action = actions[type_]
     else:
         e_ = "Unsupported type"
-        raise PlatitudeError(e_)
+        raise PlatitudesError(e_)
 
     return action, choices
 
@@ -319,7 +321,7 @@ class Platitudes:
 
         try:
             args_ = self._parser.parse_args(arguments[1:])
-        except PlatitudeError as e:
+        except PlatitudesError as e:
             print("\n", e, "\n")
             print(
                 self._parser._get_positional_actions()[0]  # pyright: ignore
