@@ -1,7 +1,7 @@
 ## Using a config file to supply default values
 
 A common pattern that I find really useful to version control the parameters
-passed to complex CLI programs is to save the actual parameters on a file. My
+passed to complex CLI programs is to save thes actual parameters on a file. My
 calls to the CLI then reduce to just providing a config file, however, I still
 retain the ability to manually override some of the parameters specified on the
 config file. Platitudes can automatically inject an optional parameter for you
@@ -82,7 +82,7 @@ Two things to note here:
 1. The names used in the json are the actual argument names on the function;
 2. We didn't need to specify `camera_name` since it already had a default.
 
-Let's running it again a couple of times:
+Let's run it again a couple of times:
 
 ```
 ❯ python magic_config_01.py lab_runner --config-file magic_config_01.json
@@ -101,9 +101,9 @@ Camera Name: Infrared
 ```
 
 The astute reader might have noticed that we passed `n-points` and
-`camera-name` as optional parameters, that is prefixed by `--` and in arbitrary
-order despite the function signature implying they should act as positional
-since they don't have a default.
+`camera-name` as optional parameters, that is, prefixed by `--` and in
+arbitrary order despite the function signature implying they should act as
+positional since they don't have a default.
 
 !!! note "All parameters become optional when using config file defaults"
 
