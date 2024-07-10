@@ -15,9 +15,9 @@ from typing import Annotated, Any, Union, cast, get_args, get_origin
 from uuid import UUID
 
 from .actions import (
-    PlatitudesAction,
     FloatAction,
     IntAction,
+    PlatitudesAction,
     StrAction,
     UUIDAction,
     make_enum_action,
@@ -25,11 +25,10 @@ from .actions import (
 from .argument import Argument
 from .errors import PlatitudesError
 
-# TODO: Finish documentation for magic config
-# TODO: Refactor
 # TODO: Internal docstrings
 # TODO: Shown default valid datetime formats
 # TODO: Fix fake cast
+# TODO: Better use of platitude errors througout
 
 
 def _create_parser(
