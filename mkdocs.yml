@@ -17,6 +17,7 @@ nav:
   - 'Extended Example': extended_example.md
   - Positional Vs Optional Params:  positional_vs_optional_parameters.md
   - 'Environment Variables': envvars.md
+  - 'Config File Defaults': config_file_defaults.md
   - Supported Types:
     - str: types/str.md
     - numbers: types/numbers.md
