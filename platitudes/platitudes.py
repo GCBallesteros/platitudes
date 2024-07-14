@@ -314,18 +314,19 @@ class Platitudes:
         try:
             args_ = self._parser.parse_args(arguments[1:])
         except PlatitudesError as e:
-            print("\n", e, "\n")
+            print("\n", e, "\n", file=sys.stderr)
             print(
                 self._parser._get_positional_actions()[0]  # pyright: ignore
                 .choices[arguments[1]]
-                .format_help()
+                .format_help(),
+                file=sys.stderr,
             )
             sys.exit(1)
 
         if len(arguments) >= 2:
             main_command = self._registered_commands[arguments[1]]
         else:
-            print(self._parser.format_help())
+            print(self._parser.format_help(), file=sys.stderr)
             sys.exit(1)
 
         config = _merge_magic_config_with_argv(
